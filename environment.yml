@@ -1,0 +1,6 @@
+name: crypto_bot
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+prefix: /Users/philipp/opt/anaconda3/envs/crypto_bot
