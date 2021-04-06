@@ -4,13 +4,14 @@ import os
 from coinbase.wallet.client import Client
 import time
 from multiprocessing import Process
+import json
+from threading import Thread
 
 current_path = os.path.abspath(os.path.dirname(__file__))
-API_file = open(current_path+"/API_key.txt")
+API_file = open(current_path+"/API_key.json")
 
-key = API_file.readline().strip("\n")
-secret = API_file.readline().strip("\n")
-client = Client(key, secret)
+API_key_dict = json.load(API_file)
+client = Client(API_key_dict["key"], API_key_dict["secret"])
 
 currencies = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
@@ -56,7 +57,7 @@ def update_graphs(currencies: list) -> None:
 
 
 def normalised_price_graph(currencies: list, period: str = "day", filename: str = "trend_graph.png",
-                           clear_plot: bool = True, significance_threshold: float = 0.01) -> None:
+                           clear_plot: bool = True, significance_threshold: float = 0.05) -> None:
     """
     saves a plot of the most significant changing currencies on a normalized graph. By default the pyplot is cleared,
     but this can be changed using clear_plot.
@@ -82,21 +83,20 @@ def normalised_price_graph(currencies: list, period: str = "day", filename: str 
 
     sorted_currencies = (sorted(percentage_change)[::-1])          # sorted in order of decreasing percentage change
     for coin in sorted_currencies[:3] + sorted_currencies[-3:]:    # include first 3 most increasing/decreasing coins.
-        if np.abs(percentage_change[coin]) > significance_threshold:  # include only significant changes in the graph
-            percentage_change_graph = 100*(np.array(prices_list[coin]) / prices_list[coin][0] - 1)
-            plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
-                     color = colors[coin])
+        percentage_change_graph = 100*(np.array(prices_list[coin]) / prices_list[coin][0] - 1)
+        plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
+                 color = colors[coin])
 
-            # add coin labels to plot
-            sign = np.sign(percentage_change[coin])
-            if sign >= 0:
-                sign = "+"
-            else:
-                sign = "-"
-            plt.text(1.5, percentage_change_graph[-1], sign + "%2.0f%%" % (np.abs(percentage_change[coin]*100)) + " "
-                     + coin, color = colors[coin],fontsize=7)
-            if not clear_plot:
-                plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
+        # add coin labels to plot
+        sign = np.sign(percentage_change[coin])
+        if sign >= 0:
+            sign = "+"
+        else:
+            sign = "-"
+        plt.text(1.5, percentage_change_graph[-1], sign + "%2.0f%%" % (np.abs(percentage_change[coin]*100)) + " "
+                 + coin, color = colors[coin],fontsize=7)
+        if not clear_plot:
+            plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
     # plot labels etc.
     plt.legend()
@@ -141,6 +141,13 @@ def get_price_change(coin: str, period: str = "day") -> float:
     return float(relative_diff*100)
 
 
+def get_account_balance():
+    accounts = client.get_accounts()["data"]
+
+    balances = {account["balance"]["currency"]: float(account["balance"]["amount"]) for account in accounts}
+    return balances
+
+
 if __name__ == '__main__':
     # run interactive plot in a separate process
     process = Process(target = thread_price_graph, args = (currencies, ))
@@ -158,6 +165,8 @@ if __name__ == '__main__':
     while True:
         changes = []                # list containing the percentage price change,
         new_notifications = False   # specifies whether a notification is new or not.
+
+        balances = get_account_balance()
 
         for coin in currencies:
             change = get_price_change(coin)
@@ -184,7 +193,9 @@ if __name__ == '__main__':
             print("No significant changes.")
 
         current_time = time.strftime("%H:%M:%S", time.localtime())
-        print("checked at " + str(current_time),end="\n\n")
+        print("checked at " + str(current_time), end="\n\n")
+
+        print(balances)
 
         time.sleep(delay)
 
