@@ -73,8 +73,9 @@ if __name__ == '__main__':
             changes.append(change)
             #print(coin + " : " + "%.2f" % (change*100))
 
-            if change*100 > day_threshold:
-                print(coin + " increased by " + "%.2f"%(change*100) + " %")
-            elif change*100 < -day_threshold:
-                print(coin + " decreased by " + "%.2f"%(-change*100) + " %")
+            if change*100 > day_threshold*0:
+                print(" ↑ " + coin + " increased by " + "%.2f"%(change*100) + " %")
+            elif change*100 < -day_threshold*0:
+                print(" ↓ "+coin + " decreased by " + "%.2f"%(-change*100) + " %")
+        print("\n")
         time.sleep(5*60)
