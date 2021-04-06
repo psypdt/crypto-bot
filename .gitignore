@@ -5,3 +5,5 @@ API_key.txt
 graphs/
 
 API_key.json
+
+utils/__pycache__/
