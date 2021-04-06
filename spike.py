@@ -50,10 +50,11 @@ def update_graphs(currencies : list) -> None:
         plt.close()
 
 
-def get_price_change(coin : str) -> float:
+def get_price_change(coin : str, period: str = "day") -> float:
     """
     calculates percentage change for a coin over the past hour.
     :param coin: the coin for which the percentage is calculated
+    :param period: the period for which the price change is calculated.
     :return: percentage change over the past hour
     """
     times, prices = get_historical(coin)
@@ -62,25 +63,18 @@ def get_price_change(coin : str) -> float:
     return float(relative_diff)
 
 
-def get_trend(coin, threshold):
-    """
-    checks if the difference falls within a threshold for increasing and decreasing price.
-    :param coin: coin that will be checked.
-    :param threshold: percentage change that defines a spike.
-    :return: 1, 0 or -1 if increasing, stagnant or decreasing respectively.
-    """
-    if get_price_change(coin) >= threshold:
-        return 1
-    if get_price_change(coin) <= threshold:
-        return -1
-    return 0
-
-
 if __name__ == '__main__':
+    day_threshold = 10
+    hour_threshold = 10
     while True:
         changes = []
         for coin in currencies:
             change = get_price_change(coin)
             changes.append(change)
-            print(coin + " : " + "%.2f" % (change*100) )
+            #print(coin + " : " + "%.2f" % (change*100))
+
+            if change*100 > day_threshold:
+                print(coin + " increased by " + "%.2f"%(change*100) + " %")
+            elif change*100 < -day_threshold:
+                print(coin + " decreased by " + "%.2f"%(-change*100) + " %")
         time.sleep(5*60)
