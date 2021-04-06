@@ -3,3 +3,4 @@ schedule
 coinbase
 numpy
 matplotlib
+cbpro

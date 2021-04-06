@@ -5,7 +5,7 @@ from coinbase.wallet.client import Client
 import time
 from multiprocessing import Process
 import json
-from threading import Thread
+import cbpro
 
 current_path = os.path.abspath(os.path.dirname(__file__))
 API_file = open(current_path+"/API_key.json")
@@ -195,7 +195,7 @@ if __name__ == '__main__':
         current_time = time.strftime("%H:%M:%S", time.localtime())
         print("checked at " + str(current_time), end="\n\n")
 
-        print(balances)
+        print(client.get_accounts())
 
         time.sleep(delay)
 
