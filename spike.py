@@ -1,10 +1,8 @@
 import numpy as np
 import os
 import time
-from multiprocessing import Process
 import json
 from utils import API_wrapper as wpr
-from utils import pricegraph as graph
 
 
 current_path = os.path.abspath(os.path.dirname(__file__))
@@ -14,11 +12,6 @@ API_KEY_DICT = json.load(API_FILE)
 wrapper = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
 CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
-
-# create dictionary containing colors for each coin (for plots)
-COLORS = ["orange", "black", "blue", "grey", "blue", "purple", "green", "darkblue", "red", "lightblue", "pink",
-          "darkred", "darkgreen"]
-COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
 
 
 if __name__ == '__main__':
