@@ -10,7 +10,6 @@ API_file = open(current_path+"/API_key.txt")
 
 key = API_file.readline().strip("\n")
 secret = API_file.readline().strip("\n")
-key = key
 client = Client(key, secret)
 
 currencies = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
@@ -82,7 +81,7 @@ def normalised_price_graph(currencies: list, period: str = "day", filename: str 
         percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
     sorted_currencies = (sorted(percentage_change)[::-1])          # sorted in order of decreasing percentage change
-    for coin in sorted_currencies[:3] + sorted_currencies[-4:]:    # include first 3 most increasing/decreasing coins.
+    for coin in sorted_currencies[:3] + sorted_currencies[-3:]:    # include first 3 most increasing/decreasing coins.
         if np.abs(percentage_change[coin]) > significance_threshold:  # include only significant changes in the graph
             percentage_change_graph = 100*(np.array(prices_list[coin]) / prices_list[coin][0] - 1)
             plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
@@ -174,6 +173,12 @@ if __name__ == '__main__':
                 print(" ↓ "+coin + " decreased by " + "%.2f" % (-change) + " %")
                 notified[coin] = change
                 new_notifications = True
+            if np.abs(change) < day_threshold < np.abs(notified[coin]):
+                if notified[coin] > 0:
+                    print("Spike has ended for " + coin + ".")
+                elif notified[coin] < 0:
+                    print("Dip has ended for " + coin + ".")
+                notified[coin] = 0
 
         if not new_notifications:
             print("No significant changes.")
