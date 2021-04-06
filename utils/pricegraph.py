@@ -18,6 +18,7 @@ class Graphs:
     def update_graphs(self, current_path: str = None) -> None:
         """
         saves graphs of prices for each coin in currencies list with respect to CHF.
+
         :param current_path: path to save graphs
         :return: None
         """
@@ -34,11 +35,25 @@ class Graphs:
             plt.savefig(current_path + "/graphs/hourprices_" + coin + ".png")
             plt.close()
 
+
+    def _plot_percentage_change(self, prices_list, coin, percentage_change, clear_plot, sign) -> None:
+        percentage_change_graph = 100 * (np.array(prices_list[coin]) / prices_list[coin][0] - 1)
+        plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
+                 color=self.colors[coin])
+
+        # add coin labels to plot
+        plt.text(1.5, percentage_change_graph[-1], sign + "%.0f%%" % (np.abs(percentage_change[coin] * 100)) + " "
+                 + coin, color=self.colors[coin], fontsize=7)
+        if not clear_plot:
+            plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
+
+
     def normalised_price_graph(self, period: str = "day", filename: str = "trend_graph.png",
                                clear_plot: bool = True, current_path = None) -> None:
         """
         saves a plot of the most significant changing currencies on a normalized graph. By default the pyplot is cleared,
         but this can be changed using clear_plot.
+
         :param period: the time period to be graphed.
         :param filename: the filename of the output image.
         :param clear_plot: specifies whether the plot should be cleared. (default = True)
@@ -61,24 +76,35 @@ class Graphs:
             times_list.update({coin: times})
             percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
-        sorted_currencies = (sorted(percentage_change)[::-1])          # sorted in order of decreasing percentage change
-        for coin in sorted_currencies[:2] + sorted_currencies[-2:]:    # include first 3 most increasing/decreasing coins.
-            percentage_change_graph = 100*(np.array(prices_list[coin]) / prices_list[coin][0] - 1)
-            plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
-                     color = self.colors[coin])
+        sorted_currencies = (sorted(percentage_change)[::-1])        # sorted in order of decreasing percentage change
+        plt.subplot(2, 1, 1)
+        plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
-            # add coin labels to plot
-            sign = np.sign(percentage_change[coin])
-            if sign >= 0:
-                sign = "+"
-            else:
-                sign = "-"
-            plt.text(1.5, percentage_change_graph[-1], sign + "%2.0f%%" % (np.abs(percentage_change[coin]*100)) + " "
-                     + coin, color = self.colors[coin], fontsize=7)
-            if not clear_plot:
-                plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
+        plt.title("Increasing Currencies")
+        for coin in sorted_currencies[:3]:  # include first 3 most increasing coins.
+            if percentage_change[coin] < 0:
+                continue
+            self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "+")
 
         # plot labels etc.
+        plt.xlim(-25, 1)
+        plt.grid()
+        plt.legend()
+        plt.xlabel("Time")
+        plt.ylabel("Price Change (%)")
+
+        plt.subplot(2, 1, 2)
+        plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
+
+        plt.title("Decreasing Currencies")
+        for coin in sorted_currencies[-3:]:  # include first 3 most increasing coins.
+            if percentage_change[coin] > 0:
+                continue
+            self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "-")
+
+        # plot labels etc.
+        plt.xlim(-25, 1)
+        plt.grid()
         plt.legend()
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
@@ -95,6 +121,7 @@ class Graphs:
             -> None:
         """
         displays an interactive price plot which is updated on a periodic basis.
+
         :param period: the time period to be graphed.
         :param filename: the filename of the output image.
         :param delay: specifies the delay between plot updates.
@@ -107,11 +134,11 @@ class Graphs:
 
 
 if __name__ == "__main__":
-    current_path = os.path.abspath(os.path.dirname(__file__)) + "/.."
-    API_FILE = open(current_path + "/API_key.json")
+    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/.."
+    API_FILE = open(CURRENT_PATH + "/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
-    wrapper = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
+    WRAPPER = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
     CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
@@ -120,5 +147,5 @@ if __name__ == "__main__":
               "darkred", "darkgreen"]
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
 
-    graph = Graphs(wrapper, CURRENCIES, COLORS)
+    graph = Graphs(WRAPPER, CURRENCIES, COLORS)
     graph.thread_price_graph()

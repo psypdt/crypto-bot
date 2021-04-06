@@ -10,6 +10,7 @@ class API_wrapper:
     def get_historical(self, coin: str, period: str = "day") -> (list, list):
         """
         calls get_historical_prices to construct price and time arrays over the given period for the given coin.
+
         :param coin: coin for which data is fetched
         :param period: period for which data is fetched ("hour","day", "week", "month", "all")
         :return: returns times and price lists respectively
@@ -28,6 +29,7 @@ class API_wrapper:
     def get_price_change(self, coin: str, period: str = "day") -> float:
         """
         calculates percentage change for a coin over the past hour.
+
         :param coin: the coin for which the percentage is calculated
         :param period: the period for which the price change is calculated.
         :return: percentage change over the past hour
