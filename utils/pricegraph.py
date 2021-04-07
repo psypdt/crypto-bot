@@ -92,26 +92,33 @@ class Graphs:
         # plot labels etc.
         plt.xlim(-25, 1)
         plt.grid()
-        plt.legend()
+        if percentage_change[sorted_currencies[0]] < 0.:
+            plt.text(-12, 0, "It's a bad day for crypto.", ha="center", va="center", fontsize=25, color = "darkred")
+        else:
+            plt.legend()
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
         fig.add_subplot(2, 1, 2)
         plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
+        always_show_threshold = 10/100
         plt.title("Decreasing Currencies")
         for coin in sorted_currencies[-3:]:  # include first 3 most increasing coins.
             if percentage_change[coin] > 0:
                 continue
             self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "-")
         for coin in sorted_currencies[3:-3]:
-            if percentage_change[coin] >= 10/100:
+            if percentage_change[coin] >= always_show_threshold:
                 self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "+")
-            if percentage_change[coin] <= -10/100:
+            if percentage_change[coin] <= -always_show_threshold:
                 self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "-")
         # plot labels etc.
         plt.xlim(-25, 1)
         plt.grid()
-        plt.legend()
+        if percentage_change[sorted_currencies[-1]] > 0.:
+            plt.text(-12, 0, "It's a good day for crypto!", ha="center", va="center",fontsize=25,color = "green")
+        else:
+            plt.legend()
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
 
