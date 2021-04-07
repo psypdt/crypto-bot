@@ -63,8 +63,7 @@ class Graphs:
         if not current_path:
             current_path = self.current_path
 
-        plt.clf()   # clear graph
-        plt.grid()  # plot grid
+        plt.close()
 
         prices_list = {}
         times_list = {}
@@ -77,7 +76,8 @@ class Graphs:
             percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
         sorted_currencies = (sorted(percentage_change)[::-1])        # sorted in order of decreasing percentage change
-        plt.subplot(2, 1, 1)
+        fig = plt.figure(figsize=(9,16))
+        fig.add_subplot(2, 1, 1)
         plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
         plt.title("Increasing Currencies")
@@ -92,8 +92,7 @@ class Graphs:
         plt.legend()
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
-
-        plt.subplot(2, 1, 2)
+        fig.add_subplot(2, 1, 2)
         plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
         plt.title("Decreasing Currencies")
