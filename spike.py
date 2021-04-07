@@ -1,7 +1,8 @@
 import numpy as np
 import os
 import time
-from utils import CoinbaseAPI as wpr
+from utils.coinbase_utils import CoinbaseAPI as wpr
+
 if os.name == 'nt':
     import winsound
 

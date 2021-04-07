@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import CoinbaseAPI as wpr
+from utils.coinbase_utils import CoinbaseAPI as wpr
 import os
 import json
 
@@ -34,7 +34,6 @@ class Graphs:
 
             plt.savefig(current_path + "/graphs/hourprices_" + coin + ".png")
             plt.close()
-
 
     def _plot_percentage_change(self, prices_list, coin, percentage_change, clear_plot, sign) -> None:
         percentage_change_graph = 100 * (np.array(prices_list[coin]) / prices_list[coin][0] - 1)
