@@ -3,3 +3,8 @@ API_key.txt
 .DS_Store
 
 graphs/
+
+API_key.json
+
+utils/__pycache__/
+telegram-bot-api-key.txt
