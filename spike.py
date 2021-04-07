@@ -3,7 +3,8 @@ import os
 import time
 import json
 from utils import API_wrapper as wpr
-
+if os.name == 'nt':
+    import winsound
 
 current_path = os.path.abspath(os.path.dirname(__file__))
 API_FILE = open(current_path + "/API_key.json")
@@ -12,6 +13,11 @@ API_KEY_DICT = json.load(API_FILE)
 wrapper = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
 CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
+
+
+def beep(freq, duration):
+    if os.name == 'nt':
+        winsound.Beep(freq, duration)
 
 
 if __name__ == '__main__':
@@ -38,13 +44,16 @@ if __name__ == '__main__':
             # from the previous notification.
             if change > day_threshold and change - notified[coin] > notification_threshold:
                 print(" ↑ " + coin + " increased by " + "%.2f" % change + " %")
+                beep(880, 500)
                 notified[coin] = change
                 new_notifications = True
-            elif change < -day_threshold and change - notified[coin] < notification_threshold:
+            elif change < -day_threshold and change - notified[coin] < -notification_threshold:
                 print(" ↓ "+coin + " decreased by " + "%.2f" % (-change) + " %")
+                beep(220, 500)
                 notified[coin] = change
                 new_notifications = True
-            if np.abs(change) < day_threshold < np.abs(notified[coin]):
+            if np.abs(change) < day_threshold/2 < np.abs(notified[coin]):
+                beep(440, 1000)
                 if notified[coin] > 0:
                     print("Spike has ended for " + coin + ".")
                 elif notified[coin] < 0:

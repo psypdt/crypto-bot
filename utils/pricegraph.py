@@ -75,7 +75,8 @@ class Graphs:
             times_list.update({coin: times})
             percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
-        sorted_currencies = (sorted(percentage_change)[::-1])        # sorted in order of decreasing percentage change
+        # sorted in order of decreasing percentage change
+        sorted_currencies = (sorted(percentage_change.keys(), key = lambda x: percentage_change[x], reverse=True))
         fig = plt.figure(figsize=(9,16),facecolor="black")
         plt.style.use('dark_background')
 
@@ -102,7 +103,11 @@ class Graphs:
             if percentage_change[coin] > 0:
                 continue
             self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "-")
-
+        for coin in sorted_currencies[3:-3]:
+            if percentage_change[coin] >= 10/100:
+                self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "+")
+            if percentage_change[coin] <= -10/100:
+                self._plot_percentage_change(prices_list, coin, percentage_change, clear_plot, "-")
         # plot labels etc.
         plt.xlim(-25, 1)
         plt.grid()
@@ -144,7 +149,7 @@ if __name__ == "__main__":
     CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
     # create dictionary containing colors for each coin (for plots)
-    COLORS = ["orange", "black", "blue", "grey", "blue", "purple", "green", "darkblue", "red", "lightblue", "pink",
+    COLORS = ["orange", "lightyellow", "blue", "grey", "blue", "purple", "green", "darkblue", "red", "lightblue", "pink",
               "darkred", "darkgreen"]
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
 
