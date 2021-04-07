@@ -5,6 +5,7 @@ API_key.json
 graphs/
 
 API_key.json
+*.pyc
 
 utils/__pycache__/
 telegram-bot-api-key.txt
