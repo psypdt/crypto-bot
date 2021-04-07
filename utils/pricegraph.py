@@ -43,7 +43,7 @@ class Graphs:
 
         # add coin labels to plot
         plt.text(1.5, percentage_change_graph[-1], sign + "%.0f%%" % (np.abs(percentage_change[coin] * 100)) + " "
-                 + coin, color=self.colors[coin], fontsize=7)
+                 + coin, color=self.colors[coin], fontsize=10)
         if not clear_plot:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
@@ -76,7 +76,9 @@ class Graphs:
             percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
         sorted_currencies = (sorted(percentage_change)[::-1])        # sorted in order of decreasing percentage change
-        fig = plt.figure(figsize=(9,16))
+        fig = plt.figure(figsize=(9,16),facecolor="black")
+        plt.style.use('dark_background')
+
         fig.add_subplot(2, 1, 1)
         plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
