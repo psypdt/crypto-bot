@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import API_wrapper as wpr
+from utils.coinbase_utils import CoinbaseAPI as wpr
 import os
 import json
 
@@ -34,7 +34,6 @@ class Graphs:
 
             plt.savefig(current_path + "/graphs/hourprices_" + coin + ".png")
             plt.close()
-
 
     def _plot_percentage_change(self, prices_list, coin, percentage_change, clear_plot, sign) -> None:
         percentage_change_graph = 100 * (np.array(prices_list[coin]) / prices_list[coin][0] - 1)
@@ -151,7 +150,7 @@ if __name__ == "__main__":
     API_FILE = open(CURRENT_PATH + "/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
-    WRAPPER = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
+    WRAPPER = wpr.CoinbaseAPI(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
     CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
