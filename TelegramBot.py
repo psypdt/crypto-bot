@@ -3,7 +3,9 @@ from __future__ import print_function
 from utils.telegram_utils import UtilityMethods, ScheduleThread
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-
+import utils.coinbase_utils.CoinbaseAPI as cbapi
+import spike
+import utils.coinbase_utils.GlobalStatics as statics
 import schedule
 import logging
 import os
@@ -17,6 +19,14 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
 
     def __init__(self):
+        # Create instance of CoinbaseAPI to facilitate communication between bot & coinbase
+        current_path = os.path.abspath(os.path.dirname(__file__))
+        api_file = str(current_path + "/API_key.json")
+
+        self.coinbase_api = cbapi.CoinbaseAPI(api_file)
+        self.spike = spike.Spike(day_threshold=1, notification_threshold=1, coinbase_api=self.coinbase_api,
+                                 currencies=statics.CURRENCIES)
+
         # Get the Telegram API Token
         dir_path = os.path.abspath(os.path.dirname(__file__))
         file_path = os.path.join(dir_path, 'telegram-bot-api-key.txt')
@@ -61,8 +71,20 @@ class TelegramBot:
         self.id = update.effective_chat.id
 
         # Schedule a function to be executed at a given time interval until the bot is killed
-        schedule.every((5*60)).seconds.do(self.test_function_message)
+        schedule.every((30)).seconds.do(self.test_spike_alert)
         ScheduleThread.ScheduleThread().start()
+
+    def test_spike_alert(self):
+        messages = self.spike.get_spike_alerts()
+
+        if len(messages) == 0:
+            return
+
+        print(messages)
+        formatted_list = [str(message) + "\n" for message in messages]
+        formatted_message = "".join(formatted_list)
+
+        self.context.bot.send_message(self.id, formatted_message)
 
 
 if __name__ == '__main__':

@@ -1,76 +1,82 @@
-import numpy as np
-import os
+from utils.coinbase_utils import CoinbaseAPI as cbapi
+import utils.coinbase_utils.GlobalStatics as statics
 import time
-from utils.coinbase_utils import CoinbaseAPI as wpr
-from typing import List
-
-if os.name == 'nt':
-    import winsound
-
-CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
+import os
 
 
-def beep(freq, duration):
-    if os.name == 'nt':
-        winsound.Beep(freq, duration)
+class Spike:
+    def __init__(self, currencies: list, notification_threshold: float, day_threshold: float,
+                 coinbase_api: cbapi.CoinbaseAPI):
+        """
+        :param currencies: List of crypto currency identifiers (BTC, XRP, etc.)
+        :param notification_threshold: Amount in (%) needed for another notification to be sent for a coin
+        :param day_threshold: Minimum (%) change over an entire day needed to send notification
+        :param coinbase_api: Coinbase API object to fetch data for crypto currencies
+        """
+        self.currencies = currencies
+        self.notification_threshold = notification_threshold  # threshold for sending a new notification (%)
+        self.day_threshold = day_threshold
+        self.coinbase_api = coinbase_api
 
+        # dictionary containing the previously notified price percentage change, used to prevent repeated notifications.
+        self.notified = {coin: 0 for coin in statics.CURRENCIES}
 
-def get_spike_alerts(is_console=False) -> List[str]:
-    """
-    Queries the coinbase API to get updates on significant changes in currencies
-    :param is_console: Flag set for console usage vs Telegram Bot usage to get time readout
-    :return: A list of strings which pertain to a currency
-    """
-    increasing_list = list()
-    decreasing_list = list()
-    changes = []  # list containing the percentage price change,
+    def get_spike_alerts(self, is_console=False) -> [(float, str)]:
+        """
+        Queries the coinbase API to get updates on significant changes in currencies
 
-    for coin in CURRENCIES:
-        change = wrapper.get_price_change(coin)
-        changes.append(change)
+        :param is_console: Flag set for console usage vs Telegram Bot usage to get time readout
+        :return: A list of tuples where the key is percentage change & value is the entire message string
+        """
+        message = list()
+        changes = []  # list containing the percentage price change,
 
-        # notify if the price changed significantly today, if this increased by more than the notification_threshold
-        # from the previous notification.
-        if change > day_threshold and change - notified[coin] > notification_threshold:
-            increasing_list.append(" ↑ " + coin + " increased by " + "%.2f" % change + " %")
-            notified[coin] = change
+        for coin in statics.CURRENCIES:
+            percentage_change = self.coinbase_api.get_price_change(coin)
+            changes.append(percentage_change)
 
-        elif change < -day_threshold and change - notified[coin] < -notification_threshold:
-            decreasing_list.append(" ↓ " + coin + " decreased by " + "%.2f" % (-change) + " %")
-            notified[coin] = change
+            # notify if the price changed significantly today, if this increased by more than the notification_threshold
+            # from the previous notification.
+            if percentage_change > self.day_threshold and percentage_change - self.notified[coin] > \
+                    self.notification_threshold:
+                message.append((percentage_change, "↑ " + coin + " increased by " +
+                                        "%.2f" % percentage_change + " %"))
+                self.notified[coin] = percentage_change
 
-        # if np.abs(change) < day_threshold / 2 < np.abs(notified[coin]):
-        #     if notified[coin] > 0:
-        #         messages.append("Spike has ended for " + coin + ".")
-        #     elif notified[coin] < 0:
-        #         messages.append("Dip has ended for " + coin + ".")
-        #     notified[coin] = 0
+            elif percentage_change < -self.day_threshold and percentage_change - self.notified[coin] < \
+                    -self.notification_threshold:
+                message.append((percentage_change, "↓ " + coin + " decreased by " +
+                                        "%.2f" % (-percentage_change) + " %"))
+                self.notified[coin] = percentage_change
 
-    message = increasing_list + decreasing_list
-    if is_console:
-        current_time = time.strftime("%H:%M:%S", time.localtime())
-        time_stamp = "checked at " + str(current_time) + "\n\n"
-        message.append(time_stamp)
+            # if np.abs(change) < day_threshold / 2 < np.abs(notified[coin]):
+            #     if notified[coin] > 0:
+            #         messages.append("Spike has ended for " + coin + ".")
+            #     elif notified[coin] < 0:
+            #         messages.append("Dip has ended for " + coin + ".")
+            #     notified[coin] = 0
 
-    return message
+        message.sort(key=lambda tup: tup[0], reverse=True)
+        message = [value for key, value in message]
+
+        if is_console:
+            current_time = time.strftime("%H:%M:%S", time.localtime())
+            time_stamp = "checked at " + str(current_time) + "\n\n"
+            message.append(time_stamp)
+
+        return message
 
 
 if __name__ == '__main__':
     current_path = os.path.abspath(os.path.dirname(__file__))
     api_file = str(current_path + "/API_key.json")
-    wrapper = wpr.CoinbaseAPI(api_file)
+    cb_api = cbapi.CoinbaseAPI(api_file)
+    spike = Spike(statics.CURRENCIES, day_threshold=10, notification_threshold=5, coinbase_api=cb_api)
 
-    day_threshold = 10
-    hour_threshold = 10
     delay = 5*60
 
-    # dictionary containing the previously notified price percentage change, which is used to prevent repeated
-    # notifications.
-    notified = {coin: 0 for coin in CURRENCIES}
-    notification_threshold = 5  # threshold for sending a new notification (%)
-
     while True:
-        results = get_spike_alerts(is_console=True)
-        for change in results:
-            print(change)
+        results = spike.get_spike_alerts(is_console=True)
+        for result in results:
+            print(result)
         time.sleep(delay)
