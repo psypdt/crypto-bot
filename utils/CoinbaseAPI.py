@@ -1,8 +1,26 @@
 from coinbase.wallet.client import Client
+import json
 
 
-class API_wrapper:
-    def __init__(self, key, secret):
+class CoinbaseAPI:
+    def __init__(self, *args):
+        """
+        Constructor which builds and api wrapper object
+        :param args: Can take in a maximum of 2 arguments which are the api key and secret respectively
+        """
+
+        # Case when user passes in path to API json file
+        if len(args) == 1:
+            api_file = open(args[0])  # Open file containing coinbase API keys
+            api_key_dict = json.load(api_file)
+            key, secret = api_key_dict["key"], api_key_dict["secret"]
+
+        elif len(args) == 2:
+            key = args[0]
+            secret = args[1]
+        else:
+            raise Exception("Incorrect input. Should either be path to keys or (key,secret)")
+
         self.key = key
         self.secret = secret
         self.client = Client(key, secret)
@@ -24,7 +42,6 @@ class API_wrapper:
         prices.reverse()
         times.reverse()
         return times, prices
-
 
     def get_price_change(self, coin: str, period: str = "day") -> float:
         """

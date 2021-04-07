@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import API_wrapper as wpr
+from utils import CoinbaseAPI as wpr
 import os
 import json
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     API_FILE = open(CURRENT_PATH + "/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
-    WRAPPER = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
+    WRAPPER = wpr.CoinbaseAPI(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
     CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 

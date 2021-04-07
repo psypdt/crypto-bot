@@ -1,16 +1,9 @@
 import numpy as np
 import os
 import time
-import json
-from utils import API_wrapper as wpr
+from utils import CoinbaseAPI as wpr
 if os.name == 'nt':
     import winsound
-
-current_path = os.path.abspath(os.path.dirname(__file__))
-API_FILE = open(current_path + "/API_key.json")
-
-API_KEY_DICT = json.load(API_FILE)
-wrapper = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
 CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
@@ -21,6 +14,10 @@ def beep(freq, duration):
 
 
 if __name__ == '__main__':
+    current_path = os.path.abspath(os.path.dirname(__file__))
+    api_file = str(current_path + "/API_key.json")
+    wrapper = wpr.CoinbaseAPI(api_file)
+
     day_threshold = 10
     hour_threshold = 10
     delay = 5*60
