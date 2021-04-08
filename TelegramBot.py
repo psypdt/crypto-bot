@@ -24,7 +24,7 @@ class TelegramBot:
         api_file = str(current_path + "/API_key.json")
 
         self.coinbase_api = cbapi.CoinbaseAPI(api_file)
-        self.spike = spike.Spike(day_threshold=1, notification_threshold=1, coinbase_api=self.coinbase_api,
+        self.spike = spike.Spike(day_threshold=10, notification_threshold=5, coinbase_api=self.coinbase_api,
                                  currencies=statics.CURRENCIES)
 
         # Get the Telegram API Token
@@ -71,7 +71,7 @@ class TelegramBot:
         self.id = update.effective_chat.id
 
         # Schedule a function to be executed at a given time interval until the bot is killed
-        schedule.every((30)).seconds.do(self.test_spike_alert)
+        schedule.every((5*60)).seconds.do(self.test_spike_alert)
         ScheduleThread.ScheduleThread().start()
 
     def test_spike_alert(self):

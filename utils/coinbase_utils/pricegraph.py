@@ -13,7 +13,7 @@ class Graphs:
         self.current_path = current_path
 
         if not self.current_path:
-            self.current_path = os.path.abspath(os.path.dirname(__file__)) + "/.."
+            self.current_path = os.path.abspath(os.path.dirname(__file__)) + "/../.."
 
     def update_graphs(self, current_path: str = None) -> None:
         """
@@ -46,7 +46,6 @@ class Graphs:
         if not clear_plot:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
-
     def normalised_price_graph(self, period: str = "day", filename: str = "trend_graph.png",
                                clear_plot: bool = True, current_path = None) -> None:
         """
@@ -61,8 +60,6 @@ class Graphs:
         """
         if not current_path:
             current_path = self.current_path
-
-        plt.close()
 
         prices_list = {}
         times_list = {}
@@ -146,7 +143,7 @@ class Graphs:
 
 
 if __name__ == "__main__":
-    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/.."
+    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/../.."
     API_FILE = open(CURRENT_PATH + "/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
