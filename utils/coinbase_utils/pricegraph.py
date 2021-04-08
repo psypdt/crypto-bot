@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import API_wrapper as wpr
+from utils.coinbase_utils import CoinbaseAPI as wpr
 import os
 import json
 
@@ -13,7 +13,7 @@ class Graphs:
         self.current_path = current_path
 
         if not self.current_path:
-            self.current_path = os.path.abspath(os.path.dirname(__file__)) + "/.."
+            self.current_path = os.path.abspath(os.path.dirname(__file__)) + "/../.."
 
     def update_graphs(self, current_path: str = None) -> None:
         """
@@ -35,7 +35,6 @@ class Graphs:
             plt.savefig(current_path + "/graphs/hourprices_" + coin + ".png")
             plt.close()
 
-
     def _plot_percentage_change(self, prices_list, coin, percentage_change, clear_plot, sign) -> None:
         percentage_change_graph = 100 * (np.array(prices_list[coin]) / prices_list[coin][0] - 1)
         plt.plot(np.linspace(-24, 0, len(prices_list[coin])), percentage_change_graph, label=coin,
@@ -47,8 +46,7 @@ class Graphs:
         if not clear_plot:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
-
-    def normalised_price_graph(self, period: str = "day", filename: str = "trend_graph.png",
+    def normalised_price_graph(self, fig, period: str = "day", filename: str = "trend_graph.png",
                                clear_plot: bool = True, current_path = None) -> None:
         """
         saves a plot of the most significant changing currencies on a normalized graph. By default the pyplot is cleared,
@@ -56,14 +54,15 @@ class Graphs:
 
         :param period: the time period to be graphed.
         :param filename: the filename of the output image.
+        :param fig: figure to plot to
         :param clear_plot: specifies whether the plot should be cleared. (default = True)
         :param current_path: alternate path to save graphs
         :return: None
         """
+
+        plt.clf()
         if not current_path:
             current_path = self.current_path
-
-        plt.close()
 
         prices_list = {}
         times_list = {}
@@ -77,7 +76,6 @@ class Graphs:
 
         # sorted in order of decreasing percentage change
         sorted_currencies = (sorted(percentage_change.keys(), key = lambda x: percentage_change[x], reverse=True))
-        fig = plt.figure(figsize=(9,16),facecolor="black")
         plt.style.use('dark_background')
 
         fig.add_subplot(2, 1, 1)
@@ -141,17 +139,19 @@ class Graphs:
         :return: None
         """
         plt.ion()   # enable interactive mode (allows for live updating of the plot)
+        fig = plt.figure(figsize=(9,16),facecolor="black")
+
         while True:
-            self.normalised_price_graph(period, filename, clear_plot = False)
+            self.normalised_price_graph(fig, period, filename, clear_plot = False)
             plt.pause(delay)
 
 
 if __name__ == "__main__":
-    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/.."
+    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/../.."
     API_FILE = open(CURRENT_PATH + "/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
-    WRAPPER = wpr.API_wrapper(API_KEY_DICT["key"], API_KEY_DICT["secret"])
+    WRAPPER = wpr.CoinbaseAPI(API_KEY_DICT["key"], API_KEY_DICT["secret"])
 
     CURRENCIES = ["BTC", "EOS", "ETH", "ZRX", "XLM", "OMG", "XTZ", "BCH", "LTC", "GRT", "FIL", "ANKR", "COMP"]
 
@@ -159,6 +159,6 @@ if __name__ == "__main__":
     COLORS = ["orange", "lightyellow", "blue", "grey", "blue", "purple", "green", "darkblue", "red", "lightblue", "pink",
               "darkred", "darkgreen"]
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
-
+    
     graph = Graphs(WRAPPER, CURRENCIES, COLORS)
     graph.thread_price_graph()

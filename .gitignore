@@ -1,10 +1,11 @@
 .idea
-API_key.txt
+API_key.json
 .DS_Store
 
 graphs/
 
 API_key.json
+*.pyc
 
 utils/__pycache__/
 telegram-bot-api-key.txt
