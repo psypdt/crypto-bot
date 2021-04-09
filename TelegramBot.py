@@ -8,6 +8,7 @@ import spike
 import utils.coinbase_utils.GlobalStatics as statics
 import schedule
 import logging
+import json
 import os
 
 # Enable logging for Telegram bot
@@ -26,6 +27,13 @@ class TelegramBot:
         self.coinbase_api = cbapi.CoinbaseAPI(api_file)
         self.spike = spike.Spike(day_threshold=10, notification_threshold=5, coinbase_api=self.coinbase_api,
                                  currencies=statics.CURRENCIES)
+
+        # Get whitelist
+        whitelist_file = str(current_path + "/whitelist.json")
+        file = open(whitelist_file)
+        whitelist_dict = json.load(file)
+        self.whitelist_users = whitelist_dict["whitelisted"]
+        # TODO: import password
 
         # Get the Telegram API Token
         dir_path = os.path.abspath(os.path.dirname(__file__))
@@ -65,6 +73,12 @@ class TelegramBot:
         :param update: An updater object used to receive data from the telegram chat
         :param context: A context object which allows us to send data to the chat
         """
+
+        username = update.message.from_user["username"]
+        if username not in self.whitelist_users:
+            print("Unauthorized user ", username)
+            return
+
         update.message.reply_text("Big money time (dab)")
 
         self.context = context

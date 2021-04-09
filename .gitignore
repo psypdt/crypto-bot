@@ -9,3 +9,4 @@ API_key.json
 
 utils/__pycache__/
 telegram-bot-api-key.txt
+whitelist.json
