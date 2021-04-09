@@ -22,14 +22,14 @@ class TelegramBot:
     def __init__(self):
         # Create instance of CoinbaseAPI to facilitate communication between bot & coinbase
         current_path = os.path.abspath(os.path.dirname(__file__))
-        api_file = str(current_path + "/API_key.json")
+        api_file = str(current_path + "/credentials/API_key.json")
 
         self.coinbase_api = cbapi.CoinbaseAPI(api_file)
         self.spike = spike.Spike(day_threshold=10, notification_threshold=5, coinbase_api=self.coinbase_api,
                                  currencies=statics.CURRENCIES)
 
         # Get whitelist
-        whitelist_file = str(current_path + "/whitelist.json")
+        whitelist_file = str(current_path + "/credentials/whitelist.json")
         file = open(whitelist_file)
         whitelist_dict = json.load(file)
         self.whitelist_users = whitelist_dict["whitelisted"]
@@ -37,7 +37,7 @@ class TelegramBot:
 
         # Get the Telegram API Token
         dir_path = os.path.abspath(os.path.dirname(__file__))
-        file_path = os.path.join(dir_path, 'telegram-bot-api-key.txt')
+        file_path = os.path.join(dir_path, 'credentials/telegram-bot-api-key.txt')
         telegram_api_token = UtilityMethods.get_telegram_api_token(file_path)
 
         # Create updater (front end for Bot) to receive updates from telegram (messages, etc) & send them to dispatcher
@@ -70,6 +70,7 @@ class TelegramBot:
     def bot_command_start(self, update: Updater, context: CallbackContext) -> None:
         """
         Mandatory instance method because the bot needs the context initialized in order to send messages
+
         :param update: An updater object used to receive data from the telegram chat
         :param context: A context object which allows us to send data to the chat
         """
@@ -79,7 +80,8 @@ class TelegramBot:
             print("Unauthorized user ", username)
             return
 
-        update.message.reply_text("Big money time (dab)")
+        print("User ", username, " authorized.")
+        update.message.reply_text("Bot started. Let's make some money!")
 
         self.context = context
         self.id = update.effective_chat.id

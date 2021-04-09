@@ -1,12 +1,11 @@
 .idea
-API_key.json
 .DS_Store
+*.pyc
+
+utils/__pycache__/
 
 graphs/
 
 API_key.json
-*.pyc
-
-utils/__pycache__/
 telegram-bot-api-key.txt
 whitelist.json
