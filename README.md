@@ -13,6 +13,8 @@
 
 # Required Files
 
+### Note: All these files should be located in a directory called ```credentials```
+
 
 ## API_key.json
 
