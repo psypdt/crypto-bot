@@ -31,14 +31,14 @@ class Spike:
             coin_string = coin_string + " "
         if percentage_change >= 0:
             if period == "week":
-                alert_string = "↑ " + coin_string + " {:4.1f}".format(percentage_change) + "%" + " over the past week"
+                alert_string = "↑ " + coin_string + " {:5.1f}".format(percentage_change) + "%" + " in the past week"
             elif period == "day":
-                alert_string = "↑ " + coin_string + " {:4.1f}".format(percentage_change) + "%" + " over the past 24 hours"
+                alert_string = "↑ " + coin_string + " {:5.1f}".format(percentage_change) + "%" + " in the past day"
         elif percentage_change < 0:
             if period == "week":
-                alert_string = "↓ " + coin_string + " {:4.1f}".format(-percentage_change) + "%" + " over the past week"
+                alert_string = "↓ " + coin_string + " {:5.1f}".format(-percentage_change) + "%" + " in the past week"
             elif period == "day":
-                alert_string = "↓ " + coin_string + " {:4.1f}".format(-percentage_change) + "%" + " over the past 24 hours"
+                alert_string = "↓ " + coin_string + " {:5.1f}".format(-percentage_change) + "%" + " in the past day"
         return alert_string
 
     def __generate_alert(self, coin: str, period: str) -> (float, str):
