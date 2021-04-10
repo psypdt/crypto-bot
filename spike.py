@@ -21,10 +21,20 @@ class Spike:
         self.week_threshold = week_threshold
         self.coinbase_api = coinbase_api
 
-        # dictionary containing the previously notified price percentage change, used to prevent repeated notifications.
-        self.notified = {coin: 0 for coin in statics.CURRENCIES}
+        # dictionary containing the previously notified price percentage change, used to prevent repeated notifications
+        # for different periods
+        self.notified = {period: {coin: 0 for coin in statics.CURRENCIES} for period in ["day", "week"]}
 
-    def __generate_alert_string(self, coin: str, percentage_change: float, period: str):
+    @staticmethod
+    def __generate_alert_string(coin: str, percentage_change: float, period: str) -> str:
+        """
+        Generates a string which reflects how a coin has changed which will be sent to the user by the bot
+
+        :param coin: The coin which the alert pertains to
+        :param percentage_change: The percentage change of the coin
+        :param period: The period over which the percentage change has occurred
+        :return: An alert string
+        """
         alert_string = ""
         coin_string = coin
         if len(coin) == 3:
@@ -59,15 +69,23 @@ class Spike:
         elif period == "day":
             threshold = self.day_threshold
 
-        # notify if the price changed significantly today, if this increased by more than the notification_threshold
-        # from the previous notification.
-        if np.abs(percentage_change) > threshold \
-                and (ignore_previous or np.abs(percentage_change - self.notified[coin]) > self.notification_threshold):
-            alert_tuple = (percentage_change, self.__generate_alert_string(coin, percentage_change, period))
-            self.notified[coin] = percentage_change
+        # Checks if coin increased by more than threshold
+        if percentage_change > threshold:
+            # Check if increased by more than notification threshold, disregard if ignore_previous is set
+            if ignore_previous or percentage_change - self.notified[period][coin] > self.notification_threshold:
+                alert_tuple = (percentage_change, self.__generate_alert_string(coin, percentage_change, period))
+                self.notified[period][coin] = percentage_change
+
+        # Check if coin decreased by more than threshold
+        elif percentage_change < -threshold:
+            # Check if coin decreased by more than notification threshold, disregard if ignore_previous is set
+            if ignore_previous or percentage_change - self.notified[period][coin] < -self.notification_threshold:
+                alert_tuple = (percentage_change, self.__generate_alert_string(coin, percentage_change, period))
+                self.notified[period][coin] = percentage_change
+
         return alert_tuple
 
-    def get_spike_alerts(self, is_console=False, ignore_previous = False) -> [(float, str)]:
+    def get_spike_alerts(self, is_console=False, ignore_previous=False) -> [(float, str)]:
         """
         Queries the coinbase API to get updates on significant changes in currencies
 
@@ -79,7 +97,7 @@ class Spike:
         week_message = list()
 
         for coin in statics.CURRENCIES:
-            week_alert_tuple = self.__generate_alert(coin, period = "week",ignore_previous=ignore_previous)
+            week_alert_tuple = self.__generate_alert(coin, period="week", ignore_previous=ignore_previous)
             if week_alert_tuple:
                 week_message.append(week_alert_tuple)
 
@@ -106,9 +124,9 @@ if __name__ == '__main__':
     api_file = str(current_path + "/credentials/API_key.json")
     cb_api = cbapi.CoinbaseAPI(api_file)
     spike = Spike(statics.CURRENCIES, coinbase_api=cb_api, day_threshold=10, week_threshold=10,
-                  notification_threshold=5)
+                  notification_threshold=0.1)
 
-    delay = 5*60
+    delay = 2*60
 
     while True:
         results = spike.get_spike_alerts(is_console=True)
