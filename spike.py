@@ -26,10 +26,19 @@ class Spike:
 
     def __generate_alert_string(self, coin: str, percentage_change: float, period: str):
         alert_string = ""
+        coin_string = coin
+        if len(coin) == 3:
+            coin_string = coin_string + " "
         if percentage_change >= 0:
             if period == "week":
-                alert_string = "+" + "%2.2f" % percentage_change + " " + coin + " this week"
-
+                alert_string = "↑ " + coin_string + " {:4.1f}".format(percentage_change) + "%" + " over the past week"
+            elif period == "day":
+                alert_string = "↑ " + coin_string + " {:4.1f}".format(percentage_change) + "%" + " over the past 24 hours"
+        elif percentage_change < 0:
+            if period == "week":
+                alert_string = "↓ " + coin_string + " {:4.1f}".format(-percentage_change) + "%" + " over the past week"
+            elif period == "day":
+                alert_string = "↓ " + coin_string + " {:4.1f}".format(-percentage_change) + "%" + " over the past 24 hours"
         return alert_string
 
     def __generate_alert(self, coin: str, period: str) -> (float, str):
@@ -78,29 +87,37 @@ class Spike:
         :param is_console: Flag set for console usage vs Telegram Bot usage to get time readout
         :return: A list of tuples where the key is percentage change & value is the entire message string
         """
-        message = list()
+        day_message = list()
+        week_message = list()
 
         for coin in statics.CURRENCIES:
-            alert_tuple = self.__generate_alert(coin, period = "week")
-            if alert_tuple:
-                message.append(alert_tuple)
+            week_alert_tuple = self.__generate_alert(coin, period = "week")
+            if week_alert_tuple:
+                week_message.append(week_alert_tuple)
 
-        message.sort(key=lambda tup: tup[0], reverse=True)
-        message = [value for key, value in message]
+            day_alert_tuple = self.__generate_alert(coin, period="day")
+            if day_alert_tuple:
+                day_message.append(day_alert_tuple)
+
+        week_message.sort(key=lambda tup: tup[0], reverse=True)
+        week_message = [value for key, value in week_message]
+
+        day_message.sort(key=lambda tup: tup[0], reverse=True)
+        day_message = [value for key, value in day_message]
 
         if is_console:
             current_time = time.strftime("%H:%M:%S", time.localtime())
             time_stamp = "checked at " + str(current_time) + "\n\n"
-            message.append(time_stamp)
-
-        return message
+            week_message.append(time_stamp)
+        print(day_message, week_message)
+        return day_message + week_message
 
 
 if __name__ == '__main__':
     current_path = os.path.abspath(os.path.dirname(__file__))
     api_file = str(current_path + "/credentials/API_key.json")
     cb_api = cbapi.CoinbaseAPI(api_file)
-    spike = Spike(statics.CURRENCIES, coinbase_api=cb_api, day_threshold=1, week_threshold=1,
+    spike = Spike(statics.CURRENCIES, coinbase_api=cb_api, day_threshold=10, week_threshold=10,
                   notification_threshold=5)
 
     delay = 5*60
