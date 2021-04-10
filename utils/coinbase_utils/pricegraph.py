@@ -6,24 +6,35 @@ import json
 
 
 class Graphs:
-    def __init__(self, wrapper, currencies, colors, current_path = None):
+    def __init__(self, wrapper, currencies, colors, current_path=None, graph_directory_name="graphs"):
         self.wrapper = wrapper
         self.currencies = currencies
         self.colors = colors
         self.current_path = current_path
+        self.graph_directory_name = "/" + graph_directory_name + "/"
 
         if not self.current_path:
-            self.current_path = os.path.abspath(os.path.dirname(__file__)) + "/../.."
+            self.current_path = os.path.abspath(os.path.dirname(__file__))
+            self.current_path = "/".join(self.current_path.split("/")[:-2])
 
-    def update_graphs(self, current_path: str = None) -> None:
+    def save_figure(self, file_name: str, figure: plt.Figure) -> None:
+        """
+        Saves a plt figure into the directory specified in the constructor
+
+        :param file_name: Name of the file (including type, .png, .jpg, etc)
+        :param figure: plt Figure object
+        """
+
+        if not os.path.exists(self.current_path + self.graph_directory_name):
+            os.mkdir(self.current_path + self.graph_directory_name)
+        figure.savefig(self.current_path + self.graph_directory_name + file_name)
+
+    def save_individual_graphs(self, current_path: str = None) -> None:
         """
         saves graphs of prices for each coin in currencies list with respect to CHF.
 
         :param current_path: path to save graphs
-        :return: None
         """
-        if not current_path:
-            current_path = self.current_path
 
         for coin in self.currencies:
             times, prices = self.wrapper.get_historical(coin)
@@ -32,7 +43,9 @@ class Graphs:
             plt.xlabel("Time (min)")
             plt.ylabel(coin + " price (CHF)")
 
-            plt.savefig(current_path + "/graphs/hourprices_" + coin + ".png")
+            plot = plt.get_current_fig_manager()
+            self.save_figure("hourprices_" + coin + ".png", plot)
+
             plt.close()
 
     def _plot_percentage_change(self, prices_list, coin, percentage_change, clear_plot, sign) -> None:
@@ -46,8 +59,8 @@ class Graphs:
         if not clear_plot:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
-    def normalised_price_graph(self, fig, period: str = "day", filename: str = "trend_graph.png",
-                               clear_plot: bool = True, current_path = None) -> None:
+    def normalised_price_graph(self, fig: plt.Figure, period: str = "day", filename: str = "trend_graph.png",
+                               clear_plot: bool = True) -> None:
         """
         saves a plot of the most significant changing currencies on a normalized graph. By default the pyplot is cleared,
         but this can be changed using clear_plot.
@@ -56,13 +69,10 @@ class Graphs:
         :param filename: the filename of the output image.
         :param fig: figure to plot to
         :param clear_plot: specifies whether the plot should be cleared. (default = True)
-        :param current_path: alternate path to save graphs
         :return: None
         """
 
         plt.clf()
-        if not current_path:
-            current_path = self.current_path
 
         prices_list = {}
         times_list = {}
@@ -75,11 +85,11 @@ class Graphs:
             percentage_change.update({coin: (prices[-1] - prices[0]) / prices[0]})
 
         # sorted in order of decreasing percentage change
-        sorted_currencies = (sorted(percentage_change.keys(), key = lambda x: percentage_change[x], reverse=True))
+        sorted_currencies = (sorted(percentage_change.keys(), key=lambda x: percentage_change[x], reverse=True))
         plt.style.use('dark_background')
 
         fig.add_subplot(2, 1, 1)
-        plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
+        plt.plot([-25, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
         plt.title("Increasing Currencies")
         for coin in sorted_currencies[:3]:  # include first 3 most increasing coins.
@@ -91,7 +101,7 @@ class Graphs:
         plt.xlim(-25, 1)
         plt.grid()
         if percentage_change[sorted_currencies[0]] < 0.:
-            plt.text(-12, 0, "It's a bad day for crypto.", ha="center", va="center", fontsize=25, color = "darkred")
+            plt.text(-12, 0, "It's a bad day for crypto.", ha="center", va="center", fontsize=25, color="darkred")
         else:
             plt.legend()
         plt.xlabel("Time")
@@ -114,7 +124,7 @@ class Graphs:
         plt.xlim(-25, 1)
         plt.grid()
         if percentage_change[sorted_currencies[-1]] > 0.:
-            plt.text(-12, 0, "It's a good day for crypto!", ha="center", va="center",fontsize=25,color = "green")
+            plt.text(-12, 0, "It's a good day for crypto!", ha="center", va="center", fontsize=25, color="green")
         else:
             plt.legend()
         plt.xlabel("Time")
@@ -123,7 +133,7 @@ class Graphs:
         if not clear_plot:
             plt.pause(0.1)  # the pause statements are required such that an interactive graph updates properly.
 
-        plt.savefig(current_path + "/graphs/" + filename)
+        self.save_figure(filename, fig)
 
         if clear_plot:
             plt.clf()
@@ -139,15 +149,16 @@ class Graphs:
         :return: None
         """
         plt.ion()   # enable interactive mode (allows for live updating of the plot)
-        fig = plt.figure(figsize=(9,16),facecolor="black")
+        fig = plt.figure(figsize=(9,16), facecolor="black")
 
         while True:
-            self.normalised_price_graph(fig, period, filename, clear_plot = False)
+            self.normalised_price_graph(fig, period, filename, clear_plot=False)
             plt.pause(delay)
 
 
 if __name__ == "__main__":
-    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/../.."
+    CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
+    CURRENT_PATH = "/".join(CURRENT_PATH.split("/")[:-2])
     API_FILE = open(CURRENT_PATH + "/credentials/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
