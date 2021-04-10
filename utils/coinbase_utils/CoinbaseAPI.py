@@ -51,7 +51,7 @@ class CoinbaseAPI:
         :param period: the period for which the price change is calculated.
         :return: percentage change over the past hour
         """
-        times, prices = self.get_historical(coin)
+        times, prices = self.get_historical(coin, period = period)
         diff = prices[-1] - prices[0]
         relative_diff = diff / prices[0]
         return float(relative_diff*100)

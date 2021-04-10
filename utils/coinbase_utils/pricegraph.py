@@ -148,7 +148,7 @@ class Graphs:
 
 if __name__ == "__main__":
     CURRENT_PATH = os.path.abspath(os.path.dirname(__file__)) + "/../.."
-    API_FILE = open(CURRENT_PATH + "/API_key.json")
+    API_FILE = open(CURRENT_PATH + "/credentials/API_key.json")
 
     API_KEY_DICT = json.load(API_FILE)
     WRAPPER = wpr.CoinbaseAPI(API_KEY_DICT["key"], API_KEY_DICT["secret"])

@@ -25,8 +25,8 @@ class TelegramBot:
         api_file = str(current_path + "/credentials/API_key.json")
 
         self.coinbase_api = cbapi.CoinbaseAPI(api_file)
-        self.spike = spike.Spike(day_threshold=10, notification_threshold=5, coinbase_api=self.coinbase_api,
-                                 currencies=statics.CURRENCIES)
+        self.spike = spike.Spike(currencies=statics.CURRENCIES, coinbase_api=self.coinbase_api,
+                                 notification_threshold=5, day_threshold=10, week_threshold=10)
 
         # Get whitelist
         whitelist_file = str(current_path + "/credentials/whitelist.json")
@@ -85,6 +85,7 @@ class TelegramBot:
 
         self.context = context
         self.id = update.effective_chat.id
+        self.test_spike_alert()
 
         # Schedule a function to be executed at a given time interval until the bot is killed
         schedule.every((5*60)).seconds.do(self.test_spike_alert)
