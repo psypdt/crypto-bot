@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
 
     def __init__(self):
+        """
+        Initializes a CoinbaseAPI object and a Spike object using credentials stored on file, and authorizes users from
+        whitelist.
+        """
         # Create instance of CoinbaseAPI to facilitate communication between bot & coinbase
         current_path = os.path.abspath(os.path.dirname(__file__))
         api_file = str(current_path + "/credentials/API_key.json")
@@ -27,6 +31,7 @@ class TelegramBot:
         self.coinbase_api = cbapi.CoinbaseAPI(api_file)
         self.spike = spike.Spike(currencies=statics.CURRENCIES, coinbase_api=self.coinbase_api,
                                  notification_threshold=5, day_threshold=10, week_threshold=10)
+        self.notification_periodicity = 5  # in minutes
 
         # Get whitelist
         whitelist_file = str(current_path + "/credentials/whitelist.json")
@@ -51,21 +56,18 @@ class TelegramBot:
 
         # Add handlers which dictate how to respond to different commands
         self.dispatcher.add_handler(CommandHandler("start", self.bot_command_start))
+        self.dispatcher.add_handler(CommandHandler("latest", self.bot_command_latest))
 
         # Register callback behaviour with dispatcher
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
         #                                                  pass_user_data=True))
 
     def start_telegram_bot(self) -> None:
-        """Starts the bot by putting the updater into a polling mode, and making the bot wait for commands
+        """
+        Starts the bot by putting the updater into a polling mode, and making the bot wait for commands
         """
         self.updater.start_polling()
         self.updater.idle()
-
-    def test_function_message(self) -> None:
-        """Just a stupid test message
-        """
-        self.context.bot.send_message(self.id, text="Time for your meds nerd")
 
     def bot_command_start(self, update: Updater, context: CallbackContext) -> None:
         """
@@ -85,21 +87,40 @@ class TelegramBot:
 
         self.context = context
         self.id = update.effective_chat.id
-        self.test_spike_alert()
+        self.bot_send_spike_alerts()
 
         # Schedule a function to be executed at a given time interval until the bot is killed
-        schedule.every((5*60)).seconds.do(self.test_spike_alert)
+        schedule.every((self.notification_periodicity*60)).seconds.do(self.bot_send_spike_alerts)
         ScheduleThread.ScheduleThread().start()
 
-    def test_spike_alert(self):
+    def bot_command_latest(self, update: Updater, context: CallbackContext) -> None:
+        """
+        Retrieves latest spike notifications, independent of previous notifications via command "/latest".
+
+        :param update: The update context required to reply to the command.
+        :param context: Default CallbackContext.
+        """
+        messages = self.spike.get_spike_alerts(ignore_previous=True)
+
+        if len(messages) == 0:
+            update.message.reply_text("No updates to show.")
+            return
+
+        formatted_list = [str(message) + "\n" for message in messages]
+        formatted_message = "".join(formatted_list)
+        print(formatted_message)
+
+        update.message.reply_text(formatted_message)
+
+    def bot_send_spike_alerts(self):
         messages = self.spike.get_spike_alerts()
 
         if len(messages) == 0:
             return
 
-        print(messages)
         formatted_list = [str(message) + "\n" for message in messages]
         formatted_message = "".join(formatted_list)
+        print(formatted_message)
 
         self.context.bot.send_message(self.id, formatted_message)
 

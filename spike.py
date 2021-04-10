@@ -41,12 +41,13 @@ class Spike:
                 alert_string = "↓ " + coin_string + " {:5.1f}".format(-percentage_change) + "%" + " in the past day"
         return alert_string
 
-    def __generate_alert(self, coin: str, period: str) -> (float, str):
+    def __generate_alert(self, coin: str, period: str, ignore_previous: bool = False) -> (float, str):
         """
         Generates a tuple containing the percentage change and alert message.
 
         :param coin: The coin for which the alert message is to be generated.
         :param period: The period for which the percentage change should be considered
+        :param ignore_previous: Flag that denotes that messages should be sent regardless of notification_threshold.
         :return: A tuple containing the percentage change and alert message.
         """
         alert_tuple = None
@@ -60,42 +61,29 @@ class Spike:
 
         # notify if the price changed significantly today, if this increased by more than the notification_threshold
         # from the previous notification.
-        if np.abs(percentage_change) > threshold and np.abs(percentage_change - self.notified[coin]) > \
-            self.notification_threshold:
+        if np.abs(percentage_change) > threshold \
+                and (ignore_previous or np.abs(percentage_change - self.notified[coin]) > self.notification_threshold):
             alert_tuple = (percentage_change, self.__generate_alert_string(coin, percentage_change, period))
-
-        # if percentage_change > threshold and percentage_change - self.notified[coin] > \
-        #         self.notification_threshold:
-        #     alert_tuple = (percentage_change,
-        #                     "↑ " + coin + " increased by " + "%.2f" % percentage_change + " %")
-        #
-        #     self.notified[coin] = percentage_change
-        #
-        # elif percentage_change < -threshold and percentage_change - self.notified[coin] < \
-        #         -self.notification_threshold:
-        #     alert_tuple = (percentage_change,
-        #              "↓ " + coin + " decreased by " + "%.2f" % (-percentage_change) + " %")
-        #
-        #    self.notified[coin] = percentage_change
-
+            self.notified[coin] = percentage_change
         return alert_tuple
 
-    def get_spike_alerts(self, is_console=False) -> [(float, str)]:
+    def get_spike_alerts(self, is_console=False, ignore_previous = False) -> [(float, str)]:
         """
         Queries the coinbase API to get updates on significant changes in currencies
 
         :param is_console: Flag set for console usage vs Telegram Bot usage to get time readout
+        :param ignore_previous: Flag that denotes that messages should be sent regardless of notification_threshold.
         :return: A list of tuples where the key is percentage change & value is the entire message string
         """
         day_message = list()
         week_message = list()
 
         for coin in statics.CURRENCIES:
-            week_alert_tuple = self.__generate_alert(coin, period = "week")
+            week_alert_tuple = self.__generate_alert(coin, period = "week",ignore_previous=ignore_previous)
             if week_alert_tuple:
                 week_message.append(week_alert_tuple)
 
-            day_alert_tuple = self.__generate_alert(coin, period="day")
+            day_alert_tuple = self.__generate_alert(coin, period="day", ignore_previous=ignore_previous)
             if day_alert_tuple:
                 day_message.append(day_alert_tuple)
 

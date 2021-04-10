@@ -10,4 +10,4 @@ class ScheduleThread(threading.Thread):
     def run(self):
         while True:
             schedule.run_pending()
-            time.sleep(schedule.idle_seconds())
+            time.sleep(abs(schedule.idle_seconds()))
