@@ -93,14 +93,15 @@ class PriceGraph:
         :param is_interactive: Flag which activates pause statements to update graphs properly in interactive mode
         :param sign: Sign corresponding to the percentage change (increase or decrease)
         """
+        period = -7  # -24 for days and -7 for week
         percentage_change_graph = 100 * (np.array(prices_dict[coin]) / prices_dict[coin][0] - 1)
-        plt.plot(np.linspace(-24, 0, len(prices_dict[coin])), percentage_change_graph, label=coin,
+        plt.plot(np.linspace(period, 0, len(prices_dict[coin])), percentage_change_graph, label=coin,
                  color=self.colors[coin])
 
         # add coin labels to plot
         plt.text(1.5, percentage_change_graph[-1], sign + "%.0f%%" % (np.abs(percentage_changes[coin] * 100)) + " "
                  + coin, color=self.colors[coin], fontsize=10)
-        if not is_interactive:
+        if is_interactive:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
     def normalised_price_graph(self, period: str = "day", filename: str = "trend_graph.png",
@@ -121,6 +122,7 @@ class PriceGraph:
         times_dict = {}
         percentage_change_dict = {}
 
+        # Create dict of prices for each currency
         for coin in self.currencies:
             times, prices = self.coinbase_api.get_historical(coin, period)
             prices_dict.update({coin: prices})
@@ -131,7 +133,9 @@ class PriceGraph:
         sorted_currencies = (sorted(percentage_change_dict.keys(), key=lambda x: percentage_change_dict[x], reverse=True))
 
         self.figure.add_subplot(2, 1, 1)
-        plt.plot([-25, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
+
+        period_spacing = -8
+        plt.plot([period_spacing, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
         plt.title("Increasing Currencies")
         for coin in sorted_currencies[:3]:  # include first 3 most increasing coins.
@@ -140,7 +144,7 @@ class PriceGraph:
             self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "+")
 
         # plot labels etc.
-        plt.xlim(-25, 1)
+        plt.xlim(period_spacing, 1)
         plt.grid()
 
         if percentage_change_dict[sorted_currencies[0]] < 0.:
@@ -151,7 +155,7 @@ class PriceGraph:
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
         self.figure.add_subplot(2, 1, 2)
-        plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
+        plt.plot([period_spacing, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
         always_show_threshold = 10/100
         plt.title("Decreasing Currencies")
@@ -168,7 +172,7 @@ class PriceGraph:
                 self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "-")
 
         # plot labels etc.
-        plt.xlim(-25, 1)
+        plt.xlim(period_spacing, 1)
         plt.grid()
 
         if percentage_change_dict[sorted_currencies[-1]] > 0.:
