@@ -1,14 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.coinbase_utils import CoinbaseAPI as cbapi
+from utils.coinbase_utils import GlobalStatics
+from PIL import Image
+import warnings
 import os
+import io
 import json
 
+warnings.filterwarnings( "ignore", module = "matplotlib\..*")
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib\..*")
 
-class Graphs:
-    def __init__(self, coinbase_api: cbapi.CoinbaseAPI, currencies: list, colors: dict,
-                 graph_directory_name: str = "graphs", screen_size: (float, float) = (9, 16),
-                 color_style: str = "dark_background"):
+
+class PriceGraph:
+    def __init__(self, coinbase_api: cbapi.CoinbaseAPI, currencies: list = GlobalStatics.CURRENCIES,
+                 colors: dict = GlobalStatics.COLORS, graph_directory_name: str = "graphs",
+                 screen_size: (float, float) = (6, 10), color_style: str = "dark_background",
+                 base_path=os.path.abspath(os.path.dirname(__file__))):
         """
         Constructor which initializes a Graphs object
 
@@ -18,15 +26,19 @@ class Graphs:
         :param graph_directory_name: Name of directory where graphs are saved
         :param screen_size: Size of screen for which graphs are exported and shown
         :param color_style: Style of graph background
+        :param base_path: The path from where the this class is being run from
         """
         self.coinbase_api = coinbase_api
         self.currencies = currencies
         self.colors = colors
-        self.current_path = os.path.abspath(os.path.dirname(__file__))
+        self.current_path = base_path
         self.graph_directory_name = "/" + graph_directory_name + "/"
-        self.fig = plt.figure(figsize=screen_size, facecolor="black")
+        self.figure = plt.figure(figsize=screen_size, facecolor="black")
 
         plt.style.use(color_style)  # set style for all graphs
+
+        if not self.currencies:
+            self.currencies = GlobalStatics.CURRENCIES
 
     def save_figure(self, file_name: str, figure: plt.Figure) -> None:
         """
@@ -39,6 +51,19 @@ class Graphs:
         if not os.path.exists(self.current_path + self.graph_directory_name):
             os.mkdir(self.current_path + self.graph_directory_name)
         figure.savefig(self.current_path + self.graph_directory_name + file_name)
+
+    @staticmethod
+    def convert_figure_to_pil_image(figure: plt.Figure) -> Image:
+        """
+        Saves a plt.Figure object into bytes so it doesn't have to be saved to disk
+        :param figure: Pyplot figure which will be converted to bytes
+        :return: A PIL Image which can be used later on
+        """
+
+        # Convert figure to PIL Image
+        pil_image = Image.frombytes('RGB', figure.canvas.get_width_height(), figure.canvas.tostring_rgb())
+
+        return pil_image
 
     def save_individual_graphs(self) -> None:
         """
@@ -79,7 +104,7 @@ class Graphs:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.
 
     def normalised_price_graph(self, period: str = "day", filename: str = "trend_graph.png",
-                               is_interactive: bool = True) -> None:
+                               is_interactive: bool = True, get_pil_image: bool = False) -> Image:
         """
         Saves a plot of the most significant changing currencies on a normalized graph. If interactive mode is active,
         then the plot is also shown
@@ -87,8 +112,9 @@ class Graphs:
         :param period: The time period to be graphed.
         :param filename: The filename of the output image.
         :param is_interactive: Specifies whether the plot is in interactive mode. (default = True)
+        :param get_pil_image: Flag which will return None if False or PIL.Image if True
         """
-
+        ret = None
         plt.clf()
 
         prices_dict = {}
@@ -104,7 +130,7 @@ class Graphs:
         # sorted in order of decreasing percentage change
         sorted_currencies = (sorted(percentage_change_dict.keys(), key=lambda x: percentage_change_dict[x], reverse=True))
 
-        self.fig.add_subplot(2, 1, 1)
+        self.figure.add_subplot(2, 1, 1)
         plt.plot([-25, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
         plt.title("Increasing Currencies")
@@ -124,7 +150,7 @@ class Graphs:
 
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
-        self.fig.add_subplot(2, 1, 2)
+        self.figure.add_subplot(2, 1, 2)
         plt.plot([-25, 1], [0, 0], linestyle = "--", color = "black", linewidth = 1.5)
 
         always_show_threshold = 10/100
@@ -153,13 +179,18 @@ class Graphs:
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
 
-        if not is_interactive:
+        if is_interactive:
             plt.pause(0.1)  # the pause statements are required such that an interactive graph updates properly.
 
-        self.save_figure(filename, self.fig)
+        self.save_figure(filename, self.figure)
+
+        if get_pil_image:
+            ret = self.convert_figure_to_pil_image(self.figure)
 
         if is_interactive:
             plt.clf()
+
+        return ret
 
     def display_live_plot(self, period: str = "day", filename: str = "trend_graph.png", delay: int = 5 * 60)\
             -> None:
@@ -193,5 +224,5 @@ if __name__ == "__main__":
               "darkred", "darkgreen"]
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
     
-    graph = Graphs(coinbase_api, CURRENCIES, COLORS, screen_size=(8, 8))
+    graph = PriceGraph(coinbase_api, CURRENCIES, COLORS, screen_size=(8, 8), base_path=current_path)
     graph.display_live_plot()
