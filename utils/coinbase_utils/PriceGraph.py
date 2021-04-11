@@ -99,7 +99,7 @@ class PriceGraph:
                  color=self.colors[coin])
 
         # add coin labels to plot
-        plt.text(1.5, percentage_change_graph[-1], sign + "%.0f%%" % (np.abs(percentage_changes[coin] * 100)) + " "
+        plt.text(0.5, percentage_change_graph[-1], sign + "%.0f%%" % (np.abs(percentage_changes[coin] * 100)) + " "
                  + coin, color=self.colors[coin], fontsize=10)
         if is_interactive:
             plt.pause(0.001)  # the pause statements are required such that an interactive graph updates properly.

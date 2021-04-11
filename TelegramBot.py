@@ -67,6 +67,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler("start", self.bot_command_start))
         self.dispatcher.add_handler(CommandHandler("latest", self.bot_command_latest))
         self.dispatcher.add_handler(CommandHandler("graph", self.bot_command_send_graph))
+        self.dispatcher.add_handler(CommandHandler("gimmemoney", self.bot_command_gimme_money))
 
         # Register callback behaviour with dispatcher
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
@@ -157,6 +158,10 @@ class TelegramBot:
         print(formatted_message)
 
         self.context.bot.send_message(self.id, formatted_message)
+
+    @staticmethod
+    def bot_command_gimme_money(update: Updater, context: CallbackContext):
+        update.message.reply_text("💸💸💸💸💸💸💸💸💸💸\n")
 
 
 if __name__ == '__main__':
