@@ -5,7 +5,6 @@ from utils.coinbase_utils import GlobalStatics
 from PIL import Image
 import warnings
 import os
-import io
 import json
 
 warnings.filterwarnings( "ignore", module = "matplotlib\..*")
@@ -50,6 +49,7 @@ class PriceGraph:
 
         if not os.path.exists(self.current_path + self.graph_directory_name):
             os.mkdir(self.current_path + self.graph_directory_name)
+
         figure.savefig(self.current_path + self.graph_directory_name + file_name)
 
     @staticmethod
@@ -116,7 +116,8 @@ class PriceGraph:
         :param get_pil_image: Flag which will return None if False or PIL.Image if True
         """
         ret = None
-        plt.clf()
+        always_show_threshold = 20 / 100  # Min threshold for currency to be plotted independent of already plotted currencies
+        self.figure.clf()
 
         prices_dict = {}
         times_dict = {}
@@ -132,13 +133,24 @@ class PriceGraph:
         # sorted in order of decreasing percentage change
         sorted_currencies = (sorted(percentage_change_dict.keys(), key=lambda x: percentage_change_dict[x], reverse=True))
 
+        # Plots all currencies which have a percentage change above the always_show_threshold
+        for coin in sorted_currencies[3:-3]:
+            if percentage_change_dict[coin] >= always_show_threshold:
+                plt.subplot(2, 1, 1)  # Change to increasing plot because currency is decreasing (prevents incorrect graphing)
+                self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "+")
+            if percentage_change_dict[coin] <= -always_show_threshold:
+                plt.subplot(2, 1, 2)  # Change to decreasing plot because currency is decreasing (prevents incorrect graphing)
+                self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "-")
+
         self.figure.add_subplot(2, 1, 1)
 
         period_spacing = -8
         plt.plot([period_spacing, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
         plt.title("Increasing Currencies")
-        for coin in sorted_currencies[:3]:  # include first 3 most increasing coins.
+
+        # include first 3 most increasing coins.
+        for coin in sorted_currencies[:3]:
             if percentage_change_dict[coin] < 0:
                 continue
             self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "+")
@@ -147,29 +159,26 @@ class PriceGraph:
         plt.xlim(period_spacing, 1)
         plt.grid()
 
+        # Check if there are increasing currencies, if not then put some text onto the graph
         if percentage_change_dict[sorted_currencies[0]] < 0.:
             plt.text(-12, 0, "It's a bad day for crypto.", ha="center", va="center", fontsize=25, color="darkred")
         else:
-            plt.legend()
+            plt.legend()  # Prevents legend error which is spawned from having an empty plot
 
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
+
+        # Create second graph for decreasing currencies
         self.figure.add_subplot(2, 1, 2)
         plt.plot([period_spacing, 1], [0, 0], linestyle="--", color="black", linewidth=1.5)
 
-        always_show_threshold = 10/100
         plt.title("Decreasing Currencies")
 
-        for coin in sorted_currencies[-3:]:  # include first 3 most increasing coins.
+        # include first 3 most increasing coins.
+        for coin in sorted_currencies[-3:]:
             if percentage_change_dict[coin] > 0:
                 continue
             self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "-")
-
-        for coin in sorted_currencies[3:-3]:
-            if percentage_change_dict[coin] >= always_show_threshold:
-                self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "+")
-            if percentage_change_dict[coin] <= -always_show_threshold:
-                self.__plot_percentage_change(prices_dict, coin, percentage_change_dict, is_interactive, "-")
 
         # plot labels etc.
         plt.xlim(period_spacing, 1)
@@ -183,8 +192,8 @@ class PriceGraph:
         plt.xlabel("Time")
         plt.ylabel("Price Change (%)")
 
-        if is_interactive:
-            plt.pause(0.1)  # the pause statements are required such that an interactive graph updates properly.
+        # if is_interactive:
+        #     plt.pause(0.1)  # the pause statements are required such that an interactive graph updates properly.
 
         self.save_figure(filename, self.figure)
 

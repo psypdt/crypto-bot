@@ -153,7 +153,7 @@ class TelegramBot:
 
         # Get PIL image from PriceGraph
         pil_image = self.price_graph.normalised_price_graph(period="week", is_interactive=False, get_pil_image=True)
-
+        pil_image.show()
         # Convert PIL Image into raw bytes
         buffer = io.BytesIO()
         buffer.name = 'image.jpeg'
