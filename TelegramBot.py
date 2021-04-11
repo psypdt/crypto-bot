@@ -73,6 +73,19 @@ class TelegramBot:
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
         #                                                  pass_user_data=True))
 
+    def authenticate(self, update: Updater) -> bool:
+        """
+        Checks if a user is on the whitelist.
+
+        :param update:
+        :return:
+        """
+        username = update.message.from_user["username"]
+        if username not in self.whitelist_users:
+            print("Unauthorized user ", username)
+            return False
+        return True
+
     def start_telegram_bot(self) -> None:
         """
         Starts the bot by putting the updater into a polling mode, and making the bot wait for commands
@@ -87,13 +100,9 @@ class TelegramBot:
         :param update: An updater object used to receive data from the telegram chat
         :param context: A context object which allows us to send data to the chat
         """
-
-        username = update.message.from_user["username"]
-        if username not in self.whitelist_users:
-            print("Unauthorized user ", username)
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
             return
 
-        print("User ", username, " authorized.")
         update.message.reply_text("Bot started. Let's make some money!")
 
         self.context = context
@@ -111,6 +120,11 @@ class TelegramBot:
         :param update: The update context required to reply to the command.
         :param context: Default CallbackContext.
         """
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
+        username = update.message.from_user["username"]
+        print(username, " requested the latest changes.")
         messages = self.spike.get_spike_alerts(ignore_previous=True)
 
         if len(messages) == 0:
@@ -131,6 +145,11 @@ class TelegramBot:
         :param context: Context object used to send photo to user requesting graph
         :return:
         """
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+        username = update.message.from_user["username"]
+
+        print(username, " requested a graph.")
 
         # Get PIL image from PriceGraph
         pil_image = self.price_graph.normalised_price_graph(period="week", is_interactive=False, get_pil_image=True)
@@ -148,6 +167,7 @@ class TelegramBot:
         Sends a spike alert to the user in chat. This is not a callback hence why it doesn't take in a context
         or updater as arguments.
         """
+        print("Checking for new alerts.")
         messages = self.spike.get_spike_alerts()
 
         if len(messages) == 0:
@@ -159,8 +179,12 @@ class TelegramBot:
 
         self.context.bot.send_message(self.id, formatted_message)
 
-    @staticmethod
-    def bot_command_gimme_money(update: Updater, context: CallbackContext):
+    def bot_command_gimme_money(self, update: Updater, context: CallbackContext):
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
+        username = update.message.from_user["username"]
+        print("A large sum of money was given to ", username, ".")
         update.message.reply_text("💸💸💸💸💸💸💸💸💸💸\n")
 
 
