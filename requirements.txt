@@ -4,3 +4,4 @@ coinbase
 numpy
 matplotlib
 cbpro
+pillow
