@@ -6,7 +6,7 @@ import os
 class CoinbaseAPI:
     """
     This class wraps the coinbase API in order to provide a more high level interface for coinbase functionality. The
-    class is intended to make it easier to market and account specific information from the coinbase API.
+    class is intended to make it easier to access market and account specific information from the coinbase API.
 
     Use this class to authenticate coinbase API access and retrieve raw information related to currencies and profiles.
     """
@@ -120,6 +120,7 @@ class CoinbaseAPI:
         :return: The profits or loss made (in CHF) if the amount of coin were to be sold at the current market price
         """
 
+        profits_currency = profits_currency.upper()  # Needed for get_historic_exchange_rate
         most_recent_buy = tuple()
         historical_transactions = self.get_transaction_history(coin=coin)
 
@@ -133,7 +134,7 @@ class CoinbaseAPI:
         # Get value of coin in profits_currency at a timestamp
         historic_price = self.get_historic_exchange_rate(from_currency=coin, to_currency=profits_currency,
                                                          timestamp=most_recent_buy[1])
-        currency_pair = str(coin) + "-" + str(profits_currency)
+        currency_pair = str(coin) + "-" + str(profits_currency.upper())
 
         # Get current value of coin in profits_currency
         current_price = float(self.client.get_spot_price(currency_pair=currency_pair).get("amount"))
@@ -151,7 +152,5 @@ if __name__ == '__main__':
     ret = api.get_transaction_history("BTC")
     # print(api.get_historic_exchange_rate("BTC", "CHF", ret[0][1]))
     a = api.get_coin_sell_profitability("xlm", 1)
-    print(a)
-
 
 

@@ -72,6 +72,8 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler("graph", self.bot_command_send_graph))
         self.dispatcher.add_handler(CommandHandler("gimmemoney", self.bot_command_gimme_money))
         self.dispatcher.add_handler(CommandHandler("portfolio", self.bot_command_portfolio))
+        self.dispatcher.add_handler(CommandHandler("current", self.bot_command_exchange_current))
+        self.dispatcher.add_handler(CommandHandler("profits", self.bot_command_profits))
 
         # Register callback behaviour with dispatcher
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
@@ -200,6 +202,46 @@ class TelegramBot:
         buffer.seek(0)
 
         context.bot.send_photo(update.effective_chat.id, photo=buffer)
+
+    def bot_command_exchange_current(self, update: Updater, context: CallbackContext):
+        """
+        Sends the current exchange rate in CHF of a coin passed as an argument.
+
+        NOTE: The second argument must be a FIAT currency (CHF, USD, EUR, etc.)
+
+        :param update: Updater used to reply to a message
+        :param context: Context needed to fetch argument from user
+        """
+        coin = context.args[0].upper()
+        to_currency = "CHF"
+
+        if len(context.args) > 1:
+            to_currency = context.args[1].upper()
+
+        coin_currency_pair = coin + "-" + to_currency
+        current_exchange = float(self.coinbase_api.client.get_spot_price(currency_pair=coin_currency_pair).amount)
+
+        output = "1 {} is {:.2f} {}".format(coin.upper(), current_exchange, to_currency.upper())
+
+        update.message.reply_text(str(output))
+
+    def bot_command_profits(self, update: Updater, context: CallbackContext):
+        """
+        Used to see how much profit could be gain from selling a certain currency
+
+        agr[0]: Currency which user wants to sell
+        arg[1]: Amount of currency user wants to sell
+        arg[2]: Currency in which profits are displayed (CHF, USD, etc.)
+
+        :param update: Updater used to respond to message
+        :param context: Context used to extract input arguments
+        """
+        sell_coin = context.args[0]
+        sell_amount = float(context.args[1])
+        profit_currency = context.args[2]
+        message = self.spike.get_sell_profitability(coin=sell_coin, amount=sell_amount, profit_currency=profit_currency)
+
+        update.message.reply_text(message)
 
     def bot_send_spike_alerts(self) -> None:
         """
