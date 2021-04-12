@@ -265,6 +265,7 @@ class PriceGraph:
         fig.add_subplot(2, 1, 1)
         plt.plot(times, prices)
         plt.xlim([min(times), max(times)])
+        plt.grid()
 
         fig.add_subplot(2, 1, 2)
         coins_held = np.array(coins_held).swapaxes(0,1)
@@ -272,7 +273,7 @@ class PriceGraph:
         coins_held_amount = coins_held[1]
         plt.plot(coins_held_date, coins_held_amount)
         plt.xlim([min(times), max(times)])
-
+        plt.grid()
         plt.show()
 
 
@@ -293,5 +294,5 @@ if __name__ == "__main__":
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
     
     graph = PriceGraph(coinbase_api, CURRENCIES, COLORS, screen_size=(8, 8), base_path=current_path)
-    graph.portfolio_price_graph("BTC")
+    graph.portfolio_price_graph("XLM", period="day")
     graph.display_live_plot()
