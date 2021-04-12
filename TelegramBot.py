@@ -68,6 +68,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler("latest", self.bot_command_latest))
         self.dispatcher.add_handler(CommandHandler("graph", self.bot_command_send_graph))
         self.dispatcher.add_handler(CommandHandler("gimmemoney", self.bot_command_gimme_money))
+        self.dispatcher.add_handler(CommandHandler("portfolio", self.bot_command_portfolio))
 
         # Register callback behaviour with dispatcher
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
@@ -153,8 +154,44 @@ class TelegramBot:
 
         # Get PIL image from PriceGraph
         pil_image = self.price_graph.normalised_price_graph(period="week", is_interactive=False, get_pil_image=True)
-        pil_image.show()
+        # pil_image.show()
         # Convert PIL Image into raw bytes
+        buffer = io.BytesIO()
+        buffer.name = 'image.jpeg'
+        pil_image.save(buffer, 'JPEG')
+        buffer.seek(0)
+
+        context.bot.send_photo(update.effective_chat.id, photo=buffer)
+
+    def bot_command_gimme_money(self, update: Updater, context: CallbackContext):
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
+        username = update.message.from_user["username"]
+        print("A large sum of money was given to ", username, ".")
+        update.message.reply_text("💸💸💸💸💸💸💸💸💸💸\n")
+
+    def bot_command_portfolio(self, update: Updater, context: CallbackContext):
+        if not self.authenticate(update):
+            return
+        username = update.message.from_user["username"]
+
+        print(username, " requested portfolio")
+
+        # Get period and coin from user
+        coin = context.args[0]
+
+        period = "month"
+
+        try:
+            period = context.args[1]
+        except IndexError:
+            pass
+
+        # Get PIL image
+        pil_image = self.price_graph.portfolio_price_graph(coin=coin, period=period)
+        pil_image.show()
+
         buffer = io.BytesIO()
         buffer.name = 'image.jpeg'
         pil_image.save(buffer, 'JPEG')
@@ -178,14 +215,6 @@ class TelegramBot:
         print(formatted_message)
 
         self.context.bot.send_message(self.id, formatted_message)
-
-    def bot_command_gimme_money(self, update: Updater, context: CallbackContext):
-        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
-            return
-
-        username = update.message.from_user["username"]
-        print("A large sum of money was given to ", username, ".")
-        update.message.reply_text("💸💸💸💸💸💸💸💸💸💸\n")
 
 
 if __name__ == '__main__':

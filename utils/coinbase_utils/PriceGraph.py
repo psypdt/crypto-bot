@@ -222,20 +222,24 @@ class PriceGraph:
             self.normalised_price_graph(period, filename, is_interactive=False)
             plt.pause(delay)
 
-    def portfolio_price_graph(self, coin: str, period: str = "month"):
+    def portfolio_price_graph(self, coin: str, period: str = "month") -> Image:
         transactions = self.coinbase_api.get_transaction_history(coin)
         coins_traded, dates = [], []
         prices, times = [], []
         coins_held = []
 
         currency_pair = coin+"-CHF"
-        historic = self.coinbase_api.client.get_historic_prices(currency_pair=currency_pair, period = period)
+        historic = self.coinbase_api.client.get_historic_prices(currency_pair=currency_pair, period=period)
+
+        self.figure.clf()
+        self.figure = plt.figure()
 
         # Create prices and times arrays
         for price_dict in historic["prices"]:
             times.append(datetime.datetime.strptime(price_dict["time"], "%Y-%m-%dT%H:%M:%SZ"))
             prices.append(float(price_dict["price"]))
-            # Reverse arrays such time increases higher indices
+
+        # Reverse arrays such time increases higher indices
         prices.reverse()
         times.reverse()
 
@@ -259,22 +263,23 @@ class PriceGraph:
             current_amount += coin_traded
             coins_held.append((date, current_amount))  # plot the point after the trade
         coins_held.append((datetime.datetime.now(), current_amount))
-        fig = plt.figure()
 
         # plot historical prices
-        fig.add_subplot(2, 1, 1)
+        self.figure.add_subplot(2, 1, 1)
         plt.plot(times, prices)
         plt.xlim([min(times), max(times)])
         plt.grid()
 
-        fig.add_subplot(2, 1, 2)
+        self.figure.add_subplot(2, 1, 2)
         coins_held = np.array(coins_held).swapaxes(0,1)
         coins_held_date = coins_held[0]
         coins_held_amount = coins_held[1]
         plt.plot(coins_held_date, coins_held_amount)
         plt.xlim([min(times), max(times)])
         plt.grid()
-        plt.show()
+        # plt.show()
+    
+        return self.convert_figure_to_pil_image(figure=self.figure)
 
 
 if __name__ == "__main__":
