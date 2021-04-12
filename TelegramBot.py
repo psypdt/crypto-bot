@@ -153,6 +153,7 @@ class TelegramBot:
         """
         if not self.authenticate(update):  # Verify that the user is allowed to access the bot
             return
+
         username = update.message.from_user["username"]
 
         print(username, " requested a graph.")
@@ -212,6 +213,10 @@ class TelegramBot:
         :param update: Updater used to reply to a message
         :param context: Context needed to fetch argument from user
         """
+
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
         coin = context.args[0].upper()
         to_currency = "CHF"
 
@@ -229,13 +234,17 @@ class TelegramBot:
         """
         Used to see how much profit could be gain from selling a certain currency
 
-        agr[0]: Currency which user wants to sell
-        arg[1]: Amount of currency user wants to sell
-        arg[2]: Currency in which profits are displayed (CHF, USD, etc.)
+        agr[0] Currency which user wants to sell
+        arg[1] Amount of currency user wants to sell
+        arg[2] Currency in which profits are displayed (CHF, USD, etc.)
 
         :param update: Updater used to respond to message
         :param context: Context used to extract input arguments
         """
+
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
         sell_coin = context.args[0]
         sell_amount = float(context.args[1])
         profit_currency = context.args[2]
