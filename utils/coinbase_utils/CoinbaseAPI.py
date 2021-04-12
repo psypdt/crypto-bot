@@ -5,6 +5,13 @@ import os
 
 
 class CoinbaseAPI:
+    """
+    This class wraps the coinbase API in order to provide a more high level interface for coinbase functionality. The
+    class is intended to make it easier to market and account specific information from the coinbase API.
+
+    Use this class to authenticate access to API and interface with it.
+    """
+
     def __init__(self, *args):
         """
         Constructor which builds and api wrapper object

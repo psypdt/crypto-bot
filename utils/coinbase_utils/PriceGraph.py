@@ -9,11 +9,18 @@ import os
 import json
 import datetime
 
-warnings.filterwarnings( "ignore", module = "matplotlib\..*")
+warnings.filterwarnings("ignore", module="matplotlib\..*")
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib\..*")
 
 
 class PriceGraph:
+    """
+    This class is intended to generate Graphs using the Matplotlib package. Graphs can either be displayed locally
+    or fetched as Image objects.
+
+    Use this class to generate and/or display data visualisations as graphs.
+    """
+
     def __init__(self, coinbase_api: cbapi.CoinbaseAPI, currencies: list = gs.CURRENCIES,
                  colors: dict = gs.COLORS, graph_directory_name: str = "graphs",
                  screen_size: (float, float) = (6, 10), color_style: str = "dark_background",

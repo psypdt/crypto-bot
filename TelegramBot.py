@@ -26,6 +26,9 @@ warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
 
 # noinspection PyTypeChecker
 class TelegramBot:
+    """
+    This class is designed to launch a telegram bot and expose all functionality to the user
+    """
 
     def __init__(self):
         """

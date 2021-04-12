@@ -6,6 +6,14 @@ import os
 
 
 class Spike:
+    """
+    This class is intended to generate messages which can be displayed to users. Note that the class is NOT intended
+    to broadcast alerts, this is the responsibility of the TelegramBot class.
+
+    Use this class to generate formatted messages or correlated data pairs that can be displayed in the shell,
+    emitted by a Bot used elsewhere.
+    """
+
     def __init__(self, currencies: list, coinbase_api: cbapi.CoinbaseAPI, notification_threshold: float,
                  day_threshold: float = 0, week_threshold: float = 0.):
         """
