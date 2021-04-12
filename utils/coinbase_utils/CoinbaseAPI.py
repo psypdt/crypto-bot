@@ -80,7 +80,8 @@ class CoinbaseAPI:
 
     def get_transaction_history(self, coin) -> [(float, str)]:
         """
-        Gets all transactions that have been carried out with the given input currency.
+        Gets all transactions that have been carried out with the given input currency. First entry is the most recent
+        transaction made by the API user.
 
         NOTE: When currencies are received the amount is positive, if a coin is traded for another one (BTC -> ZRX)
         then the BTC transaction will be negative
@@ -108,6 +109,38 @@ class CoinbaseAPI:
         rates = self.client.get_exchange_rates(currency=from_currency, date=timestamp)["rates"]
         return float(rates[to_currency])
 
+    def get_coin_sell_profitability(self, coin: str, sell_amount: float, profits_currency: str = "CHF") -> float:
+        """
+        Calculates how profitable it would be to sell a given number of coins taking into account ONLY the most recent
+        sell transaction and the market price when it were executed.
+
+        :param coin: The code of the coin (XLM, BTC, etc.) whose historical transactions will be queried
+        :param sell_amount: The amount (in crypto) of the coin which should be sold (0.45 XML, 1.23 BTC, etc.)
+        :param profits_currency: The currency in which profits/losses are displayed. CHF by default
+        :return: The profits or loss made (in CHF) if the amount of coin were to be sold at the current market price
+        """
+
+        most_recent_buy = tuple()
+        historical_transactions = self.get_transaction_history(coin=coin)
+
+        # Search for first buy
+        for amount, timestamp in historical_transactions:
+            # Check that transaction is a buy
+            if amount > 0:
+                most_recent_buy = (amount, timestamp)
+                break
+
+        # Get value of coin in profits_currency at a timestamp
+        historic_price = self.get_historic_exchange_rate(from_currency=coin, to_currency=profits_currency,
+                                                         timestamp=most_recent_buy[1])
+        currency_pair = str(coin) + "-" + str(profits_currency)
+
+        # Get current value of coin in profits_currency
+        current_price = float(self.client.get_spot_price(currency_pair=currency_pair).get("amount"))
+        profits = current_price*sell_amount - historic_price*most_recent_buy[0]
+
+        return profits
+
 
 if __name__ == '__main__':
     current_path = os.path.abspath(os.path.dirname(__file__))
@@ -116,6 +149,9 @@ if __name__ == '__main__':
 
     api = CoinbaseAPI(file_path)
     ret = api.get_transaction_history("BTC")
-    print(api.get_historic_exchange_rate("BTC", "CHF", ret[0][1]))
+    # print(api.get_historic_exchange_rate("BTC", "CHF", ret[0][1]))
+    a = api.get_coin_sell_profitability("xlm", 1)
+    print(a)
+
 
 
