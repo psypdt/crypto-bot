@@ -74,6 +74,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler("portfolio", self.bot_command_portfolio))
         self.dispatcher.add_handler(CommandHandler("current", self.bot_command_exchange_current))
         self.dispatcher.add_handler(CommandHandler("profits", self.bot_command_profits))
+        self.dispatcher.add_handler(CommandHandler("balance", self.bot_command_balance))
 
         # Register callback behaviour with dispatcher
         # self.dispatcher.add_handler(CallbackQueryHandler(self.bot_helper_button_select_callback, pass_update_queue=True,
@@ -251,6 +252,37 @@ class TelegramBot:
         message = self.spike.get_sell_profitability(coin=sell_coin, amount=sell_amount, profit_currency=profit_currency)
 
         update.message.reply_text(message)
+
+    def bot_command_balance(self, update: Updater, context: CallbackContext) -> None:
+        """
+        Used to check the balance of a cryptocurrency account
+
+        :param update: Updater used to respond to message
+        :param context: Context used to extract input arguments
+        """
+        if not self.authenticate(update):  # Verify that the user is allowed to access the bot
+            return
+
+        messages = []  # list of messages to be displayed to the user
+
+        if context.args[0] == "all":        # add "all" command, which returns the balance of all currencies
+            currencies = statics.CURRENCIES
+        else:                               # otherwise, the currencies listed by the user are used
+            currencies = context.args
+
+        # get balances for requested coins from Coinbase API
+        balances = self.coinbase_api.get_account_balance(currencies)
+
+        # generate balance message for each coin
+        for coin in balances.keys():
+            coin_balance = balances[coin]
+            messages.append("Your have " + str(coin_balance) + " " + str(coin))
+
+        if len(messages) == 0:  # explain syntax if no arguments are given
+            update.message.reply_text("Please enter one or more currency.\nSyntax: /balance coin1 coin2 ...")
+            return
+        update.message.reply_text("\n".join(messages))  # send message
+        return
 
     def bot_send_spike_alerts(self) -> None:
         """
