@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('agg')
 from utils.coinbase_utils import CoinbaseAPI as cbapi
 from utils.coinbase_utils import GlobalStatics as gs
 from PIL import Image
@@ -277,8 +278,8 @@ class PriceGraph:
         plt.plot(coins_held_date, coins_held_amount)
         plt.xlim([min(times), max(times)])
         plt.grid()
-        # plt.show()
-    
+
+        self.figure.canvas.draw()  # Needs to be added to prevent renderer exception from being raised
         return self.convert_figure_to_pil_image(figure=self.figure)
 
 

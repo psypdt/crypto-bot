@@ -190,7 +190,6 @@ class TelegramBot:
 
         # Get PIL image
         pil_image = self.price_graph.portfolio_price_graph(coin=coin, period=period)
-        pil_image.show()
 
         buffer = io.BytesIO()
         buffer.name = 'image.jpeg'
