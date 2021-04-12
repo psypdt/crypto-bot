@@ -1,5 +1,4 @@
 from coinbase.wallet.client import Client
-from coinbase.wallet.model import Money
 import json
 import os
 
@@ -9,7 +8,7 @@ class CoinbaseAPI:
     This class wraps the coinbase API in order to provide a more high level interface for coinbase functionality. The
     class is intended to make it easier to market and account specific information from the coinbase API.
 
-    Use this class to authenticate access to API and interface with it.
+    Use this class to authenticate coinbase API access and retrieve raw information related to currencies and profiles.
     """
 
     def __init__(self, *args):
@@ -42,7 +41,7 @@ class CoinbaseAPI:
         :param period: period for which data is fetched ("hour","day", "week", "month", "all")
         :return: returns times and price lists respectively
         """
-        historic = self.client.get_historic_prices(currency_pair = coin + "-CHF", period = period)
+        historic = self.client.get_historic_prices(currency_pair=coin + "-CHF", period=period)
 
         prices, times = [], []
         for price_dict in historic["prices"]:
@@ -60,7 +59,7 @@ class CoinbaseAPI:
         :param period: the period for which the price change is calculated.
         :return: percentage change over the past hour
         """
-        times, prices = self.get_historical(coin, period = period)
+        times, prices = self.get_historical(coin, period=period)
         diff = prices[-1] - prices[0]
         relative_diff = diff / prices[0]
         return float(relative_diff*100)
