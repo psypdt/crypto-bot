@@ -1,4 +1,6 @@
 from coinbase.wallet.client import Client
+import GlobalStatics as statics
+import datetime
 import json
 import os
 
@@ -66,7 +68,8 @@ class CoinbaseAPI:
 
     def get_account_balance(self, currencies: list) -> dict:
         """
-        Retrieves the balance of a users account
+        Retrieves a dictionary containing the balances of the specified currencies.
+        The balance is accessed by using the coin name (i.e. "XLM") as the key.
 
         :param currencies: A list of crypto codes (BTC, XLM, etc.)
         :return: Dictionary of currency, balance pairs
@@ -78,7 +81,42 @@ class CoinbaseAPI:
         balances = {account["balance"]["currency"]: float(account["balance"]["amount"]) for account in accounts}
         return balances
 
-    def get_transaction_history(self, coin) -> [(float, str)]:
+    def get_historical_balance(self, coin: str) -> [(str, float)]:
+        """
+        Generates a list of tuples which contains the balance held in coins at previous times. The times included are
+        any time at which the balance changed, ranging from the date of the first transaction to the present.
+
+        NOTE: Since the balance is added before and after each transaction, it is expected that consecutive tuples
+        either have the same balance or the same time stamp.
+        "same time stamp == vertical on graph, same balance == horizontal on graph"
+        
+        :param coin: The wallet for which the historical balance is retrieved.
+        :return: A list of tuples containing the time stamp and associated balance.
+        """
+        # get list of all previous transactions
+        transactions = self.get_transaction_history(coin=coin)
+        transactions.sort(key=lambda transaction: transaction[1])  # need to sort to prevent out of order summation.
+
+        historical_balance = []
+        current_amount = 0
+
+        # sum up transactions from first transaction to the current transaction to obtain the historical balance.
+        # The balances before and after the transactions are added to the historical_balance list.
+        for i in range(len(transactions)):
+            date, coin_traded = transactions[i][1], transactions[i][0]
+
+            historical_balance.append((date, current_amount))  # add the balance before the transaction
+            current_amount += coin_traded
+            historical_balance.append((date, current_amount))  # add the balance after the transaction
+
+        # add current balance to the list
+        current_amount = self.get_account_balance([coin])[coin]
+        historical_balance.append((datetime.datetime.now(), current_amount))
+
+        return historical_balance
+
+    # TODO: Refactor return type to [(str, float)]
+    def get_transaction_history(self, coin: str) -> [(float, str)]:
         """
         Gets all transactions that have been carried out with the given input currency. First entry is the most recent
         transaction made by the API user.
@@ -121,31 +159,14 @@ class CoinbaseAPI:
         """
 
         profits_currency = profits_currency.upper()  # Needed for get_historic_exchange_rate
-        most_recent_buy = tuple()
         historical_transactions = self.get_transaction_history(coin=coin)
 
-        # Search for first buy
-        for amount, timestamp in historical_transactions:
-            # Check that transaction is a buy
-            if amount > 0:
-                most_recent_buy = (amount, timestamp)
-                break
-
-        # Get value of coin in profits_currency at a timestamp
-        historic_price = self.get_historic_exchange_rate(from_currency=coin, to_currency=profits_currency,
-                                                         timestamp=most_recent_buy[1])
-        currency_pair = str(coin) + "-" + str(profits_currency.upper())
-
-        # Get current value of coin in profits_currency
-        current_price = float(self.client.get_spot_price(currency_pair=currency_pair).get("amount"))
-        profits = current_price*sell_amount - historic_price*sell_amount
-
-        return profits
+        return 0.
 
 
 if __name__ == '__main__':
     current_path = os.path.abspath(os.path.dirname(__file__))
-    current_path = "/".join(current_path.split("/")[:-2])
+    current_path = statics.PATH_DELIM.join(current_path.split(statics.PATH_DELIM)[:-2])
     file_path = current_path + "/credentials/API_key.json"
 
     api = CoinbaseAPI(file_path)
@@ -153,4 +174,4 @@ if __name__ == '__main__':
     # print(api.get_historic_exchange_rate("BTC", "CHF", ret[0][1]))
     a = api.get_coin_sell_profitability("xlm", 1)
 
-
+    print(api.get_historical_balance("XLM"))
