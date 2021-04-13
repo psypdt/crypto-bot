@@ -1,5 +1,5 @@
 from coinbase.wallet.client import Client
-import GlobalStatics as statics
+from utils.coinbase_utils import GlobalStatics as statics
 import numpy as np
 import datetime
 import json
