@@ -1,19 +1,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('agg')
 from utils.coinbase_utils import CoinbaseAPI as cbapi
-from utils.coinbase_utils import GlobalStatics
+from utils.coinbase_utils import GlobalStatics as gs
 from PIL import Image
 import warnings
 import os
 import json
+import datetime
 
-warnings.filterwarnings( "ignore", module = "matplotlib\..*")
+warnings.filterwarnings("ignore", module="matplotlib\..*")
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib\..*")
 
 
 class PriceGraph:
-    def __init__(self, coinbase_api: cbapi.CoinbaseAPI, currencies: list = GlobalStatics.CURRENCIES,
-                 colors: dict = GlobalStatics.COLORS, graph_directory_name: str = "graphs",
+    """
+    This class is intended to generate Graphs using the Matplotlib package. Graphs can either be displayed locally
+    or fetched as Image objects.
+
+    Use this class to generate and/or display data visualisations as graphs.
+    """
+
+    def __init__(self, coinbase_api: cbapi.CoinbaseAPI, currencies: list = gs.CURRENCIES,
+                 colors: dict = gs.COLORS, graph_directory_name: str = "graphs",
                  screen_size: (float, float) = (6, 10), color_style: str = "dark_background",
                  base_path=os.path.abspath(os.path.dirname(__file__))):
         """
@@ -37,7 +46,7 @@ class PriceGraph:
         plt.style.use(color_style)  # set style for all graphs
 
         if not self.currencies:
-            self.currencies = GlobalStatics.CURRENCIES
+            self.currencies = gs.CURRENCIES
 
     def save_figure(self, file_name: str, figure: plt.Figure) -> None:
         """
@@ -221,10 +230,70 @@ class PriceGraph:
             self.normalised_price_graph(period, filename, is_interactive=False)
             plt.pause(delay)
 
+    def portfolio_price_graph(self, coin: str, period: str = "month") -> Image:
+        transactions = self.coinbase_api.get_transaction_history(coin)
+        coins_traded, dates = [], []
+        prices, times = [], []
+        coins_held = []
+
+        currency_pair = coin+"-CHF"
+        historic = self.coinbase_api.client.get_historic_prices(currency_pair=currency_pair, period=period)
+
+        self.figure.clf()
+        self.figure = plt.figure()
+
+        # Create prices and times arrays
+        for price_dict in historic["prices"]:
+            times.append(datetime.datetime.strptime(price_dict["time"], "%Y-%m-%dT%H:%M:%SZ"))
+            prices.append(float(price_dict["price"]))
+
+        # Reverse arrays such time increases higher indices
+        prices.reverse()
+        times.reverse()
+
+        # Converts datetime strings to datetime.datetime format
+        transactions = [(transaction[0], datetime.datetime.strptime(transaction[1], "%Y-%m-%dT%H:%M:%SZ")) for transaction in transactions]
+
+        # Sort transactions in order of time created
+        transactions.sort(key=lambda transaction: transaction[1])
+
+        # Populate coins_traded and corresponding dates array
+        for transaction in transactions:
+            coins_traded.append(transaction[0])
+            dates.append(transaction[1])
+
+        # Produce amount_held array
+        current_amount = 0
+        for i in range(len(transactions)):
+            date, coin_traded = transactions[i][1], transactions[i][0]
+
+            coins_held.append((date, current_amount))  # plot the point before the trade
+            current_amount += coin_traded
+            coins_held.append((date, current_amount))  # plot the point after the trade
+        coins_held.append((datetime.datetime.now(), current_amount))
+
+        # plot historical prices
+        self.figure.add_subplot(2, 1, 1)
+        plt.plot(times, prices)
+        plt.xlim([min(times), max(times)])
+        plt.grid()
+
+        self.figure.add_subplot(2, 1, 2)
+        coins_held = np.array(coins_held).swapaxes(0,1)
+        coins_held_date = coins_held[0]
+        coins_held_amount = coins_held[1]
+        plt.plot(coins_held_date, coins_held_amount)
+        plt.xlim([min(times), max(times)])
+        plt.grid()
+
+        self.figure.canvas.draw()  # Needs to be added to prevent renderer exception from being raised
+        return self.convert_figure_to_pil_image(figure=self.figure)
+
 
 if __name__ == "__main__":
     current_path = os.path.abspath(os.path.dirname(__file__))
-    current_path = "/".join(current_path.split("/")[:-2])
+    current_path = gs.PATH_DELIM.join(current_path.split(gs.PATH_DELIM)[:-2])
+
     api_file = open(current_path + "/credentials/API_key.json")
 
     api_key_dict = json.load(api_file)
@@ -238,4 +307,5 @@ if __name__ == "__main__":
     COLORS = {coin: COLORS[i] for i, coin in enumerate(CURRENCIES)}
     
     graph = PriceGraph(coinbase_api, CURRENCIES, COLORS, screen_size=(8, 8), base_path=current_path)
+    graph.portfolio_price_graph("XLM", period="day")
     graph.display_live_plot()

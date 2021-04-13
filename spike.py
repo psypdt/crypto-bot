@@ -6,6 +6,14 @@ import os
 
 
 class Spike:
+    """
+    This class is intended to generate messages which can be displayed to users. Note that the class is NOT intended
+    to broadcast alerts, this is the responsibility of the TelegramBot class.
+
+    Use this class to generate formatted messages or correlated data pairs that can be displayed in the shell,
+    emitted by a Bot used elsewhere.
+    """
+
     def __init__(self, currencies: list, coinbase_api: cbapi.CoinbaseAPI, notification_threshold: float,
                  day_threshold: float = 0, week_threshold: float = 0.):
         """
@@ -117,6 +125,28 @@ class Spike:
             week_message.append(time_stamp)
         print(day_message, week_message)
         return day_message + week_message
+
+    def get_sell_profitability(self, coin: str, amount: float, profit_currency: str) -> str:
+        """
+        Generates a formatted message outlining how much profit could be made if a certain amount of a currency were
+        to be sold at the current market price. Message states profits in terms of profit_currency
+
+        :param coin: The coin which the user intends to sell
+        :param amount: The number of coins the user wants to sell
+        :param profit_currency: The currency in which profits are displayed
+        :return:
+        """
+
+        profits = self.coinbase_api.get_coin_sell_profitability(coin=coin, sell_amount=amount,
+                                                                profits_currency=profit_currency)
+
+        message = "No portfolio change would be yielded by selling"
+        if profits > 0:
+            message = "Selling would yield {:.2f} {} in profits".format(profits, profit_currency.upper())
+        elif profits < 0:
+            message = "Selling would yield {:.2f} {} in losses".format(profits, profit_currency.upper())
+
+        return message
 
 
 if __name__ == '__main__':
