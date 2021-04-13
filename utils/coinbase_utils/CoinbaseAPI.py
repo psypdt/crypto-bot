@@ -138,7 +138,7 @@ class CoinbaseAPI:
 
         # Get current value of coin in profits_currency
         current_price = float(self.client.get_spot_price(currency_pair=currency_pair).get("amount"))
-        profits = current_price*sell_amount - historic_price*most_recent_buy[0]
+        profits = current_price*sell_amount - historic_price*sell_amount
 
         return profits
 

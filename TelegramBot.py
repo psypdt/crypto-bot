@@ -250,9 +250,9 @@ class TelegramBot:
         """
         Used to see how much profit could be gain from selling a certain currency
 
-        agr[0] Currency which user wants to sell
-        arg[1] Amount of currency user wants to sell
-        arg[2] Currency in which profits are displayed (CHF, USD, etc.)
+        args[0] Currency which user wants to sell
+        args[1] Amount of currency user wants to sell
+        args[2] Currency in which profits are displayed (CHF, USD, etc.)
 
         :param update: Updater used to respond to message
         :param context: Context used to extract input arguments
