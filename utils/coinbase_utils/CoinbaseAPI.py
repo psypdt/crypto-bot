@@ -204,18 +204,18 @@ class CoinbaseAPI:
             timestamp, balance = monotone_balance[i]
 
             # make everything underneath cutoff line zero
-            reduced_balance = max(balance - sell_amount, 0)  # exclude balances under cutoff
+            reduced_balance = max(balance - remaining_amount, 0)  # exclude balances under cutoff
             reduced_monotone_balance.append((timestamp, reduced_balance))
 
         # sums up costs (in fiat currency) of buys that are involved in this sell.
         aggregated_costs = 0
-        for i in range(0, len(monotone_balance)-1, 2):
-            timestamp, _ = monotone_balance[i]
+        for i in range(0, len(reduced_monotone_balance)-1, 2):
+            timestamp, _ = reduced_monotone_balance[i]
             exchange_rate = self.get_historic_exchange_rate(coin, profits_currency, timestamp)
             print(exchange_rate)
 
-            balance_before = monotone_balance[i][1]
-            balance_after = monotone_balance[i+1][1]
+            balance_before = reduced_monotone_balance[i][1]
+            balance_after = reduced_monotone_balance[i+1][1]
 
             aggregated_costs += (balance_after - balance_before) * exchange_rate
 
