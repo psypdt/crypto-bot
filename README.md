@@ -1,4 +1,4 @@
-# crypto-bot
+# Spike crypto-bot
 
 
 ## Exporting conda env as .yml
@@ -9,6 +9,18 @@
 ## Creating conda env from .yml
 1. `conda env create -f environment.yml`
 
+
+# Coinbase User API Required Permissions
+
+### `wallet:accounts:read`
+
+This is needed because the bot is otherwise unable to retrieve information regarding the current state of the users
+wallets which can be queried via the bot. Some of this information is also used in calculations for certain features.
+
+### `wallet:transactions:read` 
+
+This required for the bot to calculate the profits gained by selling a currency, and in order to generate account
+specific graphs which show at what exchange rate transactions were made and how the value of user profiles changed.
 
 
 # Required Files
