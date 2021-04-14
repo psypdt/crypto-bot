@@ -75,10 +75,13 @@ class CoinbaseAPI:
         :param currencies: A list of crypto codes (BTC, XLM, etc.)
         :return: Dictionary of currency, balance pairs
         """
+        # get_account is case sensitive
+        currencies = [coin.upper() for coin in currencies]
+
         accounts = []
         for coin in currencies:
             accounts.append(self.client.get_account(coin))
-
+        [print(account["balance"]["currency"]) for account in accounts]
         balances = {account["balance"]["currency"]: float(account["balance"]["amount"]) for account in accounts}
         return balances
 
@@ -94,6 +97,8 @@ class CoinbaseAPI:
         :param coin: The wallet for which the historical balance is retrieved.
         :return: A list of tuples containing the time stamp and associated balance.
         """
+        # needed because the dictionary returned by get_account_balance has case uppercase keys
+        coin = coin.upper()
 
         # get list of all previous transactions
         transactions = self.get_transaction_history(coin=coin)
@@ -151,9 +156,9 @@ class CoinbaseAPI:
         """
         # needed because get_exchange_rates is case sensitive
         from_currency = from_currency.upper()
-
-        rates = self.client.get_exchange_rates(currency=from_currency, date=timestamp)["rates"]
-        return float(rates[to_currency])
+        currency_pair = from_currency + "-" + to_currency
+        rate = self.client.get_spot_price(currency_pair=currency_pair, date=timestamp)["amount"]
+        return float(rate)
 
     def get_coin_sell_profitability(self, coin: str, sell_amount: float, profits_currency: str = "CHF") -> float:
         """
@@ -166,6 +171,9 @@ class CoinbaseAPI:
         :return: The profits or loss made (in CHF) if the amount of coin were to be sold at the current market price
         :raises exception if sell_amount exceeds available balance.
         """
+        # needed because dict returned by get_historic_balance has uppercase keys
+        coin = coin.upper()
+        profits_currency = profits_currency.upper()
 
         historical_balance = self.get_historic_balance(coin)
         historical_balance.reverse()  # reverse to start at current date and traverse back

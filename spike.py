@@ -144,7 +144,7 @@ class Spike:
         if profits > 0:
             message = "Selling would yield {:.2f} {} in profits".format(profits, profit_currency.upper())
         elif profits < 0:
-            message = "Selling would yield {:.2f} {} in losses".format(profits, profit_currency.upper())
+            message = "Selling would yield {:.2f} {} in losses".format(-profits, profit_currency.upper())
 
         return message
 

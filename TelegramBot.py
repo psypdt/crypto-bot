@@ -267,7 +267,13 @@ class TelegramBot:
             return
 
         sell_coin = context.args[0]
-        sell_amount = float(context.args[1])
+
+        # option to specify that you want to sell all
+        if str(context.args[1]) == "all":
+            sell_amount = self.coinbase_api.get_account_balance([sell_coin.upper()])[sell_coin.upper()]
+        else:
+            sell_amount = float(context.args[1])
+
         profit_currency = context.args[2]
         message = self.spike.get_sell_profitability(coin=sell_coin, amount=sell_amount, profit_currency=profit_currency)
 
