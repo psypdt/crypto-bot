@@ -81,7 +81,6 @@ class CoinbaseAPI:
         accounts = []
         for coin in currencies:
             accounts.append(self.client.get_account(coin))
-        [print(account["balance"]["currency"]) for account in accounts]
         balances = {account["balance"]["currency"]: float(account["balance"]["amount"]) for account in accounts}
         return balances
 
@@ -123,7 +122,7 @@ class CoinbaseAPI:
         return historical_balance
 
     # TODO: Refactor return type to [(str, float)]
-    def get_transaction_history(self, coin: str) -> [(float, str)]:
+    def get_transaction_history(self, coin: str) -> [(float, str, float)]:
         """
         Gets all transactions that have been carried out with the given input currency. First entry is the most recent
         transaction made by the API user.
@@ -132,16 +131,18 @@ class CoinbaseAPI:
         then the BTC transaction will be negative
 
         :param coin: The code for a currency whose historical transactions will be queried (BTC, ZRX, etc.)
-        :return: A list of coin_amount, timestamp tuples
+        :return: A list of coin_amount, timestamp, exchange rate tuples
         """
         # Needed because get_transactions is case sensitive
         coin = coin.upper()
 
         transaction_list = self.client.get_transactions(coin).get('data')
         num_coins_traded = [float(trans["amount"].get("amount")) for trans in transaction_list]
+        exchange_rate = [float(trans["native_amount"].get("amount"))/float(trans["amount"].get("amount"))
+                         for trans in transaction_list]
         timestamps = [trans["created_at"] for trans in transaction_list]
 
-        return list(zip(num_coins_traded, timestamps))
+        return list(zip(num_coins_traded, timestamps, exchange_rate))
 
     def get_historic_exchange_rate(self, from_currency: str, to_currency: str, timestamp: str) -> float:
         """
@@ -178,6 +179,9 @@ class CoinbaseAPI:
         historical_balance = self.get_historic_balance(coin)
         historical_balance.reverse()  # reverse to start at current date and traverse back
 
+        # get exchange rates for the completed transactions
+        transaction_exchange_rates = [transaction[2] for transaction in self.get_transaction_history(coin)]
+
         # this contains the historical balance after eliminating completed buys and sells.
         # essentially this creates a "monotone hull" of the historical_balance graph.
         monotone_balance = []
@@ -209,21 +213,18 @@ class CoinbaseAPI:
 
         # sums up costs (in fiat currency) of buys that are involved in this sell.
         aggregated_costs = 0
-        for i in range(0, len(reduced_monotone_balance)-1, 2):
-            timestamp, _ = reduced_monotone_balance[i]
-            exchange_rate = self.get_historic_exchange_rate(coin, profits_currency, timestamp)
-            print(exchange_rate)
+        for i in range(len(transaction_exchange_rates)):
+            timestamp, _ = reduced_monotone_balance[2*i]
 
-            balance_before = reduced_monotone_balance[i][1]
-            balance_after = reduced_monotone_balance[i+1][1]
+            balance_before = reduced_monotone_balance[2*i][1]
+            balance_after = reduced_monotone_balance[2*i+1][1]
 
-            aggregated_costs += (balance_after - balance_before) * exchange_rate
+            aggregated_costs += (balance_after - balance_before) * transaction_exchange_rates[i]
 
         # get difference between sell price and aggregated costs
         currency_pair = coin.upper() + "-" + profits_currency.upper()
         current_exchange_rate = float(self.client.get_spot_price(currency_pair=currency_pair).get("amount"))
 
-        print(aggregated_costs)
         profit = current_exchange_rate * sell_amount - aggregated_costs
         return profit
 
@@ -235,6 +236,5 @@ if __name__ == '__main__':
 
     api = CoinbaseAPI(file_path)
     ret = api.get_transaction_history("BTC")
-    # print(api.get_historic_exchange_rate("BTC", "CHF", ret[0][1]))
 
     (api.get_coin_sell_profitability("NKN", 6.06259139))
