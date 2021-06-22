@@ -1,4 +1,4 @@
-# crypto-bot
+# A Telegram based Crypto-Bot using Coinbase
 
 
 ## Exporting conda env as .yml
