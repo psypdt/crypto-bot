@@ -33,7 +33,7 @@ This contains the API keys for coinbase and coinbase pro, along with the secret 
 
 ## telegram-bot-api-key.txt
 
-A txt file which das a ``SINGLE LINE`` no white spaces containing the bot API key on the first line
+A txt file which has a ``SINGLE LINE`` no white spaces containing the bot API key on the first line
 
 
 
